@@ -1,0 +1,12 @@
+django.log
+django.log.*
+settings_local.py
+*~
+build/*
+media/*
+static/*
+*.db
+*.pyc
+*.swp
+.DS_Store
+
