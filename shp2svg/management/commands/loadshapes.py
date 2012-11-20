@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.gis.geos import MultiPolygon, Polygon
+from django.template.defaultfilters import slugify
 from shp2svg.models import ShapeCollection, Shape
 from django.contrib.gis.gdal import *
 import json
@@ -22,7 +23,8 @@ class Command(BaseCommand):
         attribute_fields = layer.fields
         # make the name an option, obvs
         collection = ShapeCollection.objects.create(
-            name = "U.S. States"
+            name = "U.S. States",
+            slug = slugify("U.S. States"),
         )
         print collection
         for feature in layer:
