@@ -2,8 +2,11 @@ import math
 import json
 from django.conf import settings
 from django.shortcuts import render
+from django.shortcuts import redirect
+from django.contrib.gis.gdal import *
 from django.http import Http404, HttpResponse
 from shp2svg.models import Shape, ShapeCollection
+from django.template.defaultfilters import slugify
 
 #
 # Some utility functions for processing the SVG paths
@@ -122,9 +125,41 @@ def index(request):
     context = {
         'collections': ShapeCollection.objects.all()
     }
-    
     return render(request, 'index.html', context)
 
+
+def upload_shapefile(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        new_collection = ShapeCollection.objects.create(
+            name=name,
+            slug=slugify(name),
+            dbf=request.FILES.get('dbf'),
+            prj=request.FILES.get('prj'),
+            shp=request.FILES.get('shp'),
+            shx=request.FILES.get('shx'),
+        )
+        ds = DataSource(new_collection.shp.path)
+        data = {
+            'name': new_collection.name,
+            'slug': new_collection.slug,
+            'fields': layer.fields,
+        }
+        return HttpResponse(json.dumps(data), content_type='text/json')
+
+
+def shape_setup(request, slug):
+    try:
+        collection = ShapeCollection.objects.get(slug=slug)
+    except ShapeCollection.DoesNotExist:
+        raise Http404
+
+
+    context = {
+        'collection': collection
+    }
+
+    return render(request, 'setup.html', context)
 
 
 def shape_collection(request, slug):

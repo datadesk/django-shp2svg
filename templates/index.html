@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 
 {% block content %}
+<script src="{{ STATIC_URL }}js/jquery.form.js"></script>
+
 <style type="text/css">
     header h1 {
         font-size:70px;
@@ -19,6 +21,15 @@
     #step_1 {
         margin-top:40px;
     }
+    #step_1 .control-label {
+        width:62px;
+    }
+    #step_1 .controls {
+        margin-left:85px;
+    }
+    #step_1 .control-group {
+        margin-bottom:7px;
+    }
 </style>
 
 <div class="container" style="margin-top:20px">
@@ -35,37 +46,85 @@
             <div class="span6">
                 <h2>Upload your shapefile</h2>
 
-                <form class="form-horizontal" id="files">
-                    <p>Shapefiles come in four parts: Make sure to include the .dbf, .prj, .shp and .shx files. They should all have identical names.</p>
+                <form class="form-horizontal" action="/upload_shape/" method="POST" id="files" >
+                    {% csrf_token %}
+                    
+                    <p>Shapefiles come in four parts. Make sure to include the .dbf, .prj, .shp and .shx files. They should all have identical names.</p>
+
+                    <input style="margin-bottom:15px" required="required" type="text" id="name" name="name" placeholder="Name: like 'U.S. States'">
 
                     <div class="control-group">
                         <label class="control-label" for="dbf">DBF File</label>
                         <div class="controls">
-                            <input type="file" id="dbf" />
+                            <input type="file" required="required" id="dbf" name="dbf" />
                         </div>
                     </div>
                     <div class="control-group">
                         <label class="control-label" for="prj">PRJ File</label>
                         <div class="controls">
-                            <input type="file" id="prj" />
+                            <input type="file" required="required" id="prj" name="prj" />
                         </div>
                     </div>
                     <div class="control-group">
                         <label class="control-label" for="shp">SHP File</label>
                         <div class="controls">
-                            <input type="file" id="shp" />
+                            <input type="file" required="required" id="shp" name="shp" />
                         </div>
                     </div>
                     <div class="control-group">
                         <label class="control-label" for="shx">SHX File</label>
                         <div class="controls">
-                            <input type="file" id="shx" />
+                            <input type="file" required="required" id="shx" name="shx" />
                         </div>
                     </div>
+                    <button type="submit" class="btn">Submit</button>
                 </form>
-
             </div>
         </div>
+        
+        <script>
+        
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie != '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = jQuery.trim(cookies[i]);
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        var csrftoken = getCookie('csrftoken');
+
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+
+        $.ajaxSetup({
+            crossDomain: false, // obviates need for sameOrigin test
+            beforeSend: function(xhr, settings) {
+                if (!csrfSafeMethod(settings.type)) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+
+        var options = {
+            success: function (response) {
+                console.log(response);
+            }
+        }; 
+
+        $('#files').ajaxForm(options); 
+        
+        </script>
     </section>
 
 
