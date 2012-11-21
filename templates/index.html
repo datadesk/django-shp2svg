@@ -1,37 +1,48 @@
 {% extends "base.html" %}
 
+{% block extra-css %}
+    <style type="text/css">
+        header h1 {
+            font-size:70px;
+            line-height:140%;
+        }
+        .step {
+            width:100px;
+            height:100px;
+            border-radius:100px;
+            text-align:center;
+            color:white;
+            background: #333;
+            font-size:80px;
+            line-height: 120%;
+            margin-top:35px;
+        }
+        #step_1 {
+            margin-top:40px;
+        }
+        #step_1 .control-label {
+            width:62px;
+        }
+        #step_1 .controls {
+            margin-left:85px;
+        }
+        #step_1 .control-group {
+            margin-bottom:7px;
+        }
+    </style>
+{% endblock %}
+
+{% block extra-js %}
+    <script src="{{ STATIC_URL }}js/jquery.form.js"></script>
+
+    <script id="option_template" type="text/jst">
+        <% _.each(options, function (option) { %>
+            <option value="<%= option %>"><%= option %></option>
+        <% }) %>
+    </script>
+{% endblock %}
+
 {% block content %}
-<script src="{{ STATIC_URL }}js/jquery.form.js"></script>
-
-<style type="text/css">
-    header h1 {
-        font-size:70px;
-        line-height:140%;
-    }
-    .step {
-        width:100px;
-        height:100px;
-        border-radius:100px;
-        text-align:center;
-        color:white;
-        background: #333;
-        font-size:80px;
-        line-height: 120%;
-    }
-    #step_1 {
-        margin-top:40px;
-    }
-    #step_1 .control-label {
-        width:62px;
-    }
-    #step_1 .controls {
-        margin-left:85px;
-    }
-    #step_1 .control-group {
-        margin-bottom:7px;
-    }
-</style>
-
 <div class="container" style="margin-top:20px">
     <header>
         <h1>shp2svg</h1>
@@ -51,8 +62,12 @@
                     
                     <p>Shapefiles come in four parts. Make sure to include the .dbf, .prj, .shp and .shx files. They should all have identical names.</p>
 
-                    <input style="margin-bottom:15px" required="required" type="text" id="name" name="name" placeholder="Name: like 'U.S. States'">
-
+                    <div class="control-group">
+                        <label class="control-label" for="name">Name</label>
+                        <div class="controls">
+                            <input style="margin-bottom:15px" required="required" type="text" id="name" name="name" />
+                        </div>
+                    </div>
                     <div class="control-group">
                         <label class="control-label" for="dbf">DBF File</label>
                         <div class="controls">
@@ -77,13 +92,16 @@
                             <input type="file" required="required" id="shx" name="shx" />
                         </div>
                     </div>
-                    <button type="submit" class="btn">Submit</button>
+                    <div class="form-actions">
+                        <button type="submit" class="btn">Submit</button>
+                    </div>
                 </form>
             </div>
         </div>
         
         <script>
-        
+        var option_template = _.template($('#option_template').html());
+
         function getCookie(name) {
             var cookieValue = null;
             if (document.cookie && document.cookie != '') {
@@ -99,7 +117,6 @@
             }
             return cookieValue;
         }
-
         var csrftoken = getCookie('csrftoken');
 
         function csrfSafeMethod(method) {
@@ -117,8 +134,14 @@
         });
 
         var options = {
-            success: function (response) {
-                console.log(response);
+            success: function (data) {
+                console.log(data);
+                $('#slug').val(data.slug);
+                var context = {
+                    options: data.fields
+                };
+                $('#key').html(option_template(context));
+                return false
             }
         }; 
 
@@ -127,6 +150,104 @@
         </script>
     </section>
 
+    <section id="step_2">
+        <div class="row">
+            <div class="span2">
+                <div class="step">2</div>
+            </div>
+            <div class="span6">
+                <h2>Choose your options</h2>
 
+                <form class="form-horizontal" action="/setup/" method="GET" id="options" >
+                    <div style="display:none">
+                        <input type="hidden" id="slug" name="slug" value="" />
+                    </div>
+
+                    <p>First, choose which attribute field you want to use to name your paths.</p>
+
+                    <div class="control-group">
+                        <label class="control-label" for="max_size">Key</label>
+                        <div class="controls">
+                            <select required="required" id="key" name="key">
+
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label" for="max_size">Max size</label>
+                        <div class="controls">
+                            <input type="text" required="required" id="max_size" name="max_size" />
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label" for="srid">SRID</label>
+                        <div class="controls">
+                            <input type="text" required="required" id="srid" name="srid" />
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label" for="translate_x">Translate X</label>
+                        <div class="controls">
+                            <input type="text" id="translate_x" name="translate_x" />
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label" for="translate_y">Translate Y</label>
+                        <div class="controls">
+                            <input type="text" id="translate_y" name="translate_y" />
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn">Submit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <script>
+        var options = {
+            success: function (response) {
+                console.log(response);
+                var svg = document.getElementById('svg');
+                svg.innerHTML = '';
+                var r = Raphael(svg, response.max_coords[0], response.max_coords[1])
+                for (var i in response.paths) {
+                    r.path(response.paths[i].path).attr({
+                        'fill': '#dddddd',
+                        'stroke': '#ffffff',
+                        'stroke-width': 1
+                    });
+                }
+            }
+        }; 
+        $('#options').ajaxForm(options);
+        </script>
+    </section>
+
+    <section id="step_3">
+        <div class="row">
+            <div class="span2">
+                <div class="step">3</div>
+            </div>
+            <div class="span6">
+                <h2>Preview your shapes</h2>
+                <div id="svg"></div>
+            </div>
+        </div>
+    </section>
+
+    <section id="step_4">
+        <div class="row">
+            <div class="span2">
+                <div class="step">4</div>
+            </div>
+            <div class="span6">
+                <h2>Download</h2>
+                <button class="btn" type="button">JSON</button>
+                <button class="btn" type="button">SVG</button>
+            </div>
+        </div>
+    </section>
 </div>
 {% endblock %}

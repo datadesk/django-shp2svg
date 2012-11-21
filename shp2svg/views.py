@@ -7,10 +7,32 @@ from django.contrib.gis.gdal import *
 from django.http import Http404, HttpResponse
 from shp2svg.models import Shape, ShapeCollection
 from django.template.defaultfilters import slugify
+from django.contrib.gis.geos import MultiPolygon, Polygon
 
 #
 # Some utility functions for processing the SVG paths
 #
+
+
+def load_shapes(layer, collection):
+    attribute_fields = layer.fields
+    for feature in layer:
+        if feature.geom.geom_type in ['Polygon', 'MultiPolygon']:
+            # Grab a dict of all the attributes
+            attribute_dict = dict( (attr, feature[attr].value) for attr in attribute_fields )
+            # convert to multipolygon if necessary
+            if feature.geom.geom_type == 'Polygon':
+                mp = MultiPolygon(feature.geom.geos)
+            else:
+                mp = feature.geom.geos
+            # load in the shape
+            shape = Shape.objects.create(
+                poly = mp,
+                attributes = json.dumps(attribute_dict),
+                collection = collection,
+            )
+        else:
+            continue
 
 def get_projected_extent(geoqueryset):
     """
@@ -140,6 +162,8 @@ def upload_shapefile(request):
             shx=request.FILES.get('shx'),
         )
         ds = DataSource(new_collection.shp.path)
+        layer = ds[0]
+        load_shapes(layer, new_collection)
         data = {
             'name': new_collection.name,
             'slug': new_collection.slug,
@@ -148,18 +172,46 @@ def upload_shapefile(request):
         return HttpResponse(json.dumps(data), content_type='text/json')
 
 
-def shape_setup(request, slug):
-    try:
-        collection = ShapeCollection.objects.get(slug=slug)
-    except ShapeCollection.DoesNotExist:
-        raise Http404
+def shape_setup(request):
+    if request.method == 'GET':
+        slug = request.GET.get('slug')
+        try:
+            collection = ShapeCollection.objects.get(slug=slug)
+        except ShapeCollection.DoesNotExist:
+            raise Http404
+
+        translate = [0, 0]
+        if request.GET.get('translate_x'):
+            translate[0] = int(request.GET.get('translate_x'))
+
+        if request.GET.get('translate_y'):
+            translate[1] = int(request.GET.get('translate_y'))
+
+        max_size = int(request.GET.get('max_size'))
+        srid = int(request.GET.get('srid'))
+        key = request.GET.get('key')
+
+        projected_shapes = collection.get_projected_shapes(srid)
+        extent = get_projected_extent(projected_shapes)
+        scale_factor = get_scale_factor(extent, max_size)
+        max_coords = get_scaled_max_coords(extent, scale_factor)
+        paths = get_scaled_paths(projected_shapes, scale_factor, extent, key, translate=translate)
+
+        data = {
+            'paths': paths,
+            'max_coords': [max_coords[0] + translate[0], max_coords[1] + translate[1]],
+        }
+
+        return HttpResponse(json.dumps(data), content_type='text/json')
 
 
-    context = {
-        'collection': collection
-    }
 
-    return render(request, 'setup.html', context)
+
+
+
+
+
+
 
 
 def shape_collection(request, slug):

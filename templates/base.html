@@ -2,11 +2,12 @@
 <html>
     <head>
         <link rel="stylesheet" href="{{ STATIC_URL }}css/bootstrap.min.css" type="text/css" />
-        
+        {% block extra-css %}{% endblock %}
+        <script src="http://d1qqc1e9kvmdh8.cloudfront.net/js/underscore-1.4.1-min.js" type="text/javascript"></script>
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
         <script type="text/javascript" src="{{ STATIC_URL }}js/bootstrap.min.js"></script>
         <script type="text/javascript" src="{{ STATIC_URL }}js/raphael-min.js"></script>
-
+        {% block extra-js %}{% endblock %}
     </head>
     <body>
         {% block content %}{% endblock %}

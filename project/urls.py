@@ -10,7 +10,7 @@ urlpatterns = patterns('',
     url(r'^$', views.index, name='index'),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^upload_shape/', views.upload_shapefile),
-    url(r'^setup/(?P<slug>[-\d\w]+)/$', views.shape_setup),
+    url(r'^setup/', views.shape_setup),
     
     # url(r'^(?P<slug>[-\d\w]+)/$', views.shape_collection),
 
