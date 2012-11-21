@@ -108,7 +108,7 @@ def get_scaled_paths(queryset, scale, extent, key, translate=[0,0]):
             path += coords_2_path(i)
 
         scaled_coord_set[k] = {
-            'coords': path,
+            'path': path,
             'centroid': scaled_centroid,
         }
     
@@ -117,6 +117,15 @@ def get_scaled_paths(queryset, scale, extent, key, translate=[0,0]):
 #
 # The actual Views
 #
+
+def index(request):
+    context = {
+        'collections': ShapeCollection.objects.all()
+    }
+    
+    return render(request, 'index.html', context)
+
+
 
 def shape_collection(request, slug):
     """
@@ -130,7 +139,7 @@ def shape_collection(request, slug):
     # must work in a way to feed in options through the request
     # in the meantime...
     translate = [0, 0]
-    max_size = 980
+    max_size = 700
     srid = 900913
     key = "postal"
 
@@ -142,39 +151,11 @@ def shape_collection(request, slug):
 
     context = {
         'collection': collection,
-        'paths': paths,
+        'paths': json.dumps(paths),
+        'max_coords': max_coords
     }
 
     return render(request, 'collection.html', context)
-
-
-
-
-
-
-
-# def get_county_paths(self, translate=[0,0]):
-#     """
-#     Returns a dict of county svg paths and centroids, keyed by fips
-#     """
-#     coord_dict = self.get_scaled_county_coords(translate=translate)
-#     path_dict = {}
-#     for key, value in coord_dict.items():
-#         # Since a coord list is nested for multipolygons we need to 
-#         # loop through each set of coords and generate a path, then
-#         # string them together for one large path
-#         path = ''
-#         for i in value.get('coords'): #value
-#             path += self.coords_2_path(i)
-#             path += ' '
-#         path = path.strip()
-#         # Add it to our dict
-#         path_dict[key] = {
-#             'path': path,
-#             'centroid': value.get('centroid')
-#         }
-#     return path_dict
-
 
 
 

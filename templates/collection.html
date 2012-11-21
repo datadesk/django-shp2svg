@@ -1,1 +1,24 @@
-{{ paths }}
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container" style="margin-top:20px">
+    <h1>Some headline</h1>
+
+
+    <section id="svg_preview">
+        <div id="svg"></div>
+
+        <script>
+        var paths = {{ paths|safe }};
+        var r = Raphael('svg', {{ max_coords.0 }}, {{ max_coords.1 }})
+        for (var i in paths) {
+            r.path(paths[i].path).attr({
+                'fill': '#dddddd',
+                'stroke': '#ffffff',
+                'stroke-width': 1
+            })
+        }
+        </script>
+    </section>
+</div>
+{% endblock %}

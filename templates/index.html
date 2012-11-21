@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style type="text/css">
+    header h1 {
+        font-size:70px;
+        line-height:140%;
+    }
+    .step {
+        width:100px;
+        height:100px;
+        border-radius:100px;
+        text-align:center;
+        color:white;
+        background: #333;
+        font-size:80px;
+        line-height: 120%;
+    }
+    #step_1 {
+        margin-top:40px;
+    }
+</style>
+
+<div class="container" style="margin-top:20px">
+    <header>
+        <h1>shp2svg</h1>
+        <p class="lead">Some text here lorem ipsum etc</p>
+    </header>
+    
+    <section id="step_1">
+        <div class="row">
+            <div class="span2">
+                <div class="step">1</div>
+            </div>
+            <div class="span6">
+                <h2>Upload your shapefile</h2>
+
+                <form class="form-horizontal" id="files">
+                    <p>Shapefiles come in four parts: Make sure to include the .dbf, .prj, .shp and .shx files. They should all have identical names.</p>
+
+                    <div class="control-group">
+                        <label class="control-label" for="dbf">DBF File</label>
+                        <div class="controls">
+                            <input type="file" id="dbf" />
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label" for="prj">PRJ File</label>
+                        <div class="controls">
+                            <input type="file" id="prj" />
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label" for="shp">SHP File</label>
+                        <div class="controls">
+                            <input type="file" id="shp" />
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <label class="control-label" for="shx">SHX File</label>
+                        <div class="controls">
+                            <input type="file" id="shx" />
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </section>
+
+
+</div>
+{% endblock %}
