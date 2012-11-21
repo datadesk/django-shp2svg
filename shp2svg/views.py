@@ -13,24 +13,26 @@ from django.contrib.gis.geos import MultiPolygon, Polygon
 # Some utility functions for processing the SVG paths
 #
 
-
 def load_shapes(layer, collection):
     attribute_fields = layer.fields
     for feature in layer:
         if feature.geom.geom_type in ['Polygon', 'MultiPolygon']:
             # Grab a dict of all the attributes
-            attribute_dict = dict( (attr, feature[attr].value) for attr in attribute_fields )
+            attribute_dict = dict( (attr, str(feature[attr].value).decode('latin-1')) for attr in attribute_fields )
             # convert to multipolygon if necessary
             if feature.geom.geom_type == 'Polygon':
                 mp = MultiPolygon(feature.geom.geos)
             else:
                 mp = feature.geom.geos
             # load in the shape
-            shape = Shape.objects.create(
-                poly = mp,
-                attributes = json.dumps(attribute_dict),
-                collection = collection,
-            )
+            try:
+                shape = Shape.objects.create(
+                    poly = mp,
+                    attributes = json.dumps(attribute_dict),
+                    collection = collection,
+                )
+            except:
+                raise
         else:
             continue
 
