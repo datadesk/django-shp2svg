@@ -99,7 +99,7 @@ def coords_2_path(coord_list):
     path += 'Z'
     return path.replace('-0.0', '0').replace('0.0', '0').replace('.0', '')
 
-def get_scaled_paths(queryset, scale, extent, key, translate=[0,0]):
+def get_scaled_paths(queryset, scale, extent, key, translate=[0,0], centroid=False):
     """
     Returns a dict with each item in the queryset and a list of scaled coordinates.
     """
@@ -125,19 +125,26 @@ def get_scaled_paths(queryset, scale, extent, key, translate=[0,0]):
             scaled_coords.append(scaled_list)
         
         # Now to grab a translated/scaled centroid for each shape
-        centroid = i.poly.centroid.coords
-        translated_centroid = translate_coords([centroid], extent)
-        translated_centroid = translated_centroid[0]
-        scaled_centroid = [int(translated_centroid[0] * scale), int(translated_centroid[1] * scale)]
+        if centroid:
+            centroid = i.poly.centroid.coords
+            translated_centroid = translate_coords([centroid], extent)
+            translated_centroid = translated_centroid[0]
+            scaled_centroid = [int(translated_centroid[0] * scale), int(translated_centroid[1] * scale)]
 
-        path = ''
-        for i in scaled_coords:
-            path += coords_2_path(i)
+            path = ''
+            for i in scaled_coords:
+                path += coords_2_path(i)
 
-        scaled_coord_set[k] = {
-            'path': path,
-            'centroid': scaled_centroid,
-        }
+            scaled_coord_set[k] = {
+                'path': path,
+                'centroid': scaled_centroid,
+            }
+        else:
+            path = ''
+            for i in scaled_coords:
+                path += coords_2_path(i)
+
+            scaled_coord_set[k] = path   
     
     return scaled_coord_set
 
@@ -191,16 +198,20 @@ def shape_setup(request):
 
         max_size = int(request.GET.get('max_size'))
         srid = int(request.GET.get('srid'))
-        key = request.GET.get('key')
+        key = request.GET.get('key')       
+        centroid = request.GET.get('centroid', False)
+        if centroid == 'on':
+            centroid = True
 
         projected_shapes = collection.get_projected_shapes(srid)
         extent = get_projected_extent(projected_shapes)
         scale_factor = get_scale_factor(extent, max_size)
         max_coords = get_scaled_max_coords(extent, scale_factor)
-        paths = get_scaled_paths(projected_shapes, scale_factor, extent, key, translate=translate)
+        paths = get_scaled_paths(projected_shapes, scale_factor, extent, key, translate=translate, centroid=centroid)
 
         data = {
             'paths': paths,
+            'centroid': centroid,
             'max_coords': [max_coords[0] + translate[0], max_coords[1] + translate[1]],
         }
 

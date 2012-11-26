@@ -7,15 +7,15 @@
             line-height:140%;
         }
         .step {
-            width:100px;
-            height:100px;
-            border-radius:100px;
+            width:80px;
+            height:80px;
+            border-radius:80px;
             text-align:center;
             color:white;
             background: #333;
-            font-size:80px;
+            font-size:60px;
             line-height: 120%;
-            margin-top:35px;
+            margin-top:15px;
         }
         #step_1 {
             margin-top:40px;
@@ -29,11 +29,21 @@
         #step_1 .control-group {
             margin-bottom:7px;
         }
+        section {
+            display:none;
+        }
+        section#step_1 {
+            display:block;
+        }
+        div.progress.active {
+            width:70px;
+        }
     </style>
 {% endblock %}
 
 {% block extra-js %}
     <script src="{{ STATIC_URL }}js/jquery.form.js"></script>
+    <script src="{{ STATIC_URL }}js/json2.js"></script>
 
     <script id="option_template" type="text/jst">
         <% _.each(options, function (option) { %>
@@ -92,7 +102,7 @@
                             <input type="file" required="required" id="shx" name="shx" />
                         </div>
                     </div>
-                    <div class="form-actions">
+                    <div class="form-actions" id="step_1_submit">
                         <button type="submit" class="btn">Submit</button>
                     </div>
                 </form>
@@ -124,29 +134,28 @@
             return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
         }
 
-        $.ajaxSetup({
+        var options = {
             crossDomain: false, // obviates need for sameOrigin test
             beforeSend: function(xhr, settings) {
                 if (!csrfSafeMethod(settings.type)) {
                     xhr.setRequestHeader("X-CSRFToken", csrftoken);
                 }
-            }
-        });
-
-        var options = {
+                $('#step_1_submit').html('<div class="progress progress-striped active"><div class="bar" style="width: 100%;"></div></div>');
+            },            
             success: function (data) {
-                console.log(data);
                 $('#slug').val(data.slug);
                 var context = {
                     options: data.fields
                 };
                 $('#key').html(option_template(context));
+                $('#step_2').show();
+                $('.form-actions#step_1_submit').hide();
                 return false
             }
         }; 
 
         $('#files').ajaxForm(options); 
-        
+
         </script>
     </section>
 
@@ -199,29 +208,57 @@
                             <input type="text" id="translate_y" name="translate_y" />
                         </div>
                     </div>
+                    <label class="checkbox">
+                        <input id="centroid" name="centroid" type="checkbox" /> Include centroids
+                    </label>
                     <div class="form-actions">
                         <button type="submit" class="btn">Submit</button>
+                        <div class="progress progress-striped active" id="options_spinner" style="position:absolute; margin-left: 80px; margin-top: -24px; display:none;">
+                            <div class="bar" style="width: 100%;"></div>
+                        </div>
                     </div>
                 </form>
             </div>
         </div>
         <script>
-        var options = {
-            success: function (response) {
-                console.log(response);
-                var svg = document.getElementById('svg');
-                svg.innerHTML = '';
-                var r = Raphael(svg, response.max_coords[0], response.max_coords[1])
-                for (var i in response.paths) {
-                    r.path(response.paths[i].path).attr({
-                        'fill': '#dddddd',
-                        'stroke': '#ffffff',
-                        'stroke-width': 1
-                    });
+            var options = {
+                beforeSend: function () {
+                    $('#options_spinner').show();
+                },
+                success: function (response) {
+                    $('#step_3').show();
+                    $('#step_4').show();        
+                    var svg = document.getElementById('svg');
+                    svg.innerHTML = '';
+                    var r = Raphael(svg, response.max_coords[0], response.max_coords[1])
+                    
+                    if (response.centroid) {
+                        for (var i in response.paths) {
+                            r.path(response.paths[i].path).attr({
+                                'fill': '#dddddd',
+                                'stroke': '#ffffff',
+                                'stroke-width': 1
+                            });
+                            r.circle(response.paths[i].centroid[0], response.paths[i].centroid[1], 1.5).attr({
+                                fill: '#000000',
+                                'stroke-width': 0
+                            })
+                        }
+                    } else {
+                        for (var i in response.paths) {
+                            r.path(response.paths[i]).attr({
+                                'fill': '#dddddd',
+                                'stroke': '#ffffff',
+                                'stroke-width': 1
+                            });
+                        }
+                    }
+
+                    $('#options_spinner').hide();
+                    $('#paths').val(JSON.stringify(response.paths, null, 4));
                 }
-            }
-        }; 
-        $('#options').ajaxForm(options);
+            }; 
+            $('#options').ajaxForm(options);
         </script>
     </section>
 
@@ -244,10 +281,13 @@
             </div>
             <div class="span6">
                 <h2>Download</h2>
+                <p>You can copy/paste the paths below, or download them as JSON or SVG files.</p>
+                <textarea id="paths" style="width:100%; height:200px"></textarea>
                 <button class="btn" type="button">JSON</button>
                 <button class="btn" type="button">SVG</button>
             </div>
         </div>
     </section>
 </div>
+<div style="width:100%; height:35px;"></div>
 {% endblock %}
