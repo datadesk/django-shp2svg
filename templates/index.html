@@ -53,7 +53,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="container" style="margin-top:20px">
+<div class="container" style="margin-top:20px; margin-bottom:40px">
     <header>
         <h1>shp2svg</h1>
         <p class="lead">Some text here lorem ipsum etc</p>
@@ -106,57 +106,11 @@
                         <button type="submit" class="btn">Submit</button>
                     </div>
                 </form>
+                <div class="progress progress-striped active" style="width: 50%; margin:0 auto; display:none" id="step_1_spinner">
+                    <div class="bar" style="width: 100%;"></div>
+                </div>
             </div>
         </div>
-        
-        <script>
-        var option_template = _.template($('#option_template').html());
-
-        function getCookie(name) {
-            var cookieValue = null;
-            if (document.cookie && document.cookie != '') {
-                var cookies = document.cookie.split(';');
-                for (var i = 0; i < cookies.length; i++) {
-                    var cookie = jQuery.trim(cookies[i]);
-                    // Does this cookie string begin with the name we want?
-                    if (cookie.substring(0, name.length + 1) == (name + '=')) {
-                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                        break;
-                    }
-                }
-            }
-            return cookieValue;
-        }
-        var csrftoken = getCookie('csrftoken');
-
-        function csrfSafeMethod(method) {
-            // these HTTP methods do not require CSRF protection
-            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-        }
-
-        var options = {
-            crossDomain: false, // obviates need for sameOrigin test
-            beforeSend: function(xhr, settings) {
-                if (!csrfSafeMethod(settings.type)) {
-                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
-                }
-                $('#step_1_submit').html('<div class="progress progress-striped active"><div class="bar" style="width: 100%;"></div></div>');
-            },            
-            success: function (data) {
-                $('#slug').val(data.slug);
-                var context = {
-                    options: data.fields
-                };
-                $('#key').html(option_template(context));
-                $('#step_2').show();
-                $('.form-actions#step_1_submit').hide();
-                return false
-            }
-        }; 
-
-        $('#files').ajaxForm(options); 
-
-        </script>
     </section>
 
     <section id="step_2">
@@ -220,46 +174,6 @@
                 </form>
             </div>
         </div>
-        <script>
-            var options = {
-                beforeSend: function () {
-                    $('#options_spinner').show();
-                },
-                success: function (response) {
-                    $('#step_3').show();
-                    $('#step_4').show();        
-                    var svg = document.getElementById('svg');
-                    svg.innerHTML = '';
-                    var r = Raphael(svg, response.max_coords[0], response.max_coords[1])
-                    
-                    if (response.centroid) {
-                        for (var i in response.paths) {
-                            r.path(response.paths[i].path).attr({
-                                'fill': '#dddddd',
-                                'stroke': '#ffffff',
-                                'stroke-width': 1
-                            });
-                            r.circle(response.paths[i].centroid[0], response.paths[i].centroid[1], 1.5).attr({
-                                fill: '#000000',
-                                'stroke-width': 0
-                            })
-                        }
-                    } else {
-                        for (var i in response.paths) {
-                            r.path(response.paths[i]).attr({
-                                'fill': '#dddddd',
-                                'stroke': '#ffffff',
-                                'stroke-width': 1
-                            });
-                        }
-                    }
-
-                    $('#options_spinner').hide();
-                    $('#paths').val(JSON.stringify(response.paths, null, 4));
-                }
-            }; 
-            $('#options').ajaxForm(options);
-        </script>
     </section>
 
     <section id="step_3">
@@ -288,6 +202,115 @@
             </div>
         </div>
     </section>
+    <section id="error">
+        <div class="alert alert-error" >
+            <h4>Warning</h4>
+            Something went wrong, please double check your options and try again.
+        </div>
+    </section>
 </div>
-<div style="width:100%; height:35px;"></div>
+
+<script>
+    var option_template = _.template($('#option_template').html());
+    var error_text = $('#error');
+
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie != '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = jQuery.trim(cookies[i]);
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) == (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    var csrftoken = getCookie('csrftoken');
+
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+
+    var step_1_options = {
+        crossDomain: false, // obviates need for sameOrigin test
+        beforeSend: function(xhr, settings) {
+            if (!csrfSafeMethod(settings.type)) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+            $('#step_1_submit button').attr('readonly', 'readonly');
+            $('#step_1_spinner').show();
+        },
+        error: function () {
+            error_text.show();
+            $('#step_1_spinner').hide();
+            $('#step_1_submit button').removeAttr('readonly');
+        },
+        success: function (data) {
+            var data = JSON.parse(data);
+            $('#slug').val(data.slug);
+            var context = {
+                options: data.fields
+            };
+            $('#key').html(option_template(context));
+            $('#step_2').show();
+            $('.form-actions#step_1_submit').hide();
+            $('#step_1_spinner').hide();
+            error_text.hide();
+            return false
+        }
+    }; 
+
+    $('#files').ajaxForm(step_1_options); 
+
+    var step_2_options = {
+        beforeSend: function () {
+            $('#options_spinner').show();
+        },
+        error: function () {
+            error_text.show();
+            $('#step_3').hide();
+            $('#step_4').hide();
+            $('#options_spinner').hide();
+        },
+        success: function (response) {
+            var response = JSON.parse(response);
+            $('#step_3').show();
+            $('#step_4').show();
+            var svg = document.getElementById('svg');
+            svg.innerHTML = '';
+            var r = Raphael(svg, response.max_coords[0], response.max_coords[1])
+            
+            if (response.centroid) {
+                for (var i in response.paths) {
+                    r.path(response.paths[i].path).attr({
+                        'fill': '#dddddd',
+                        'stroke': '#ffffff',
+                        'stroke-width': 1
+                    }).toBack();
+                    r.circle(response.paths[i].centroid[0], response.paths[i].centroid[1], 1.5).attr({
+                        fill: '#000000',
+                        'stroke-width': 0
+                    }).toFront();
+                }
+            } else {
+                for (var i in response.paths) {
+                    r.path(response.paths[i]).attr({
+                        'fill': '#dddddd',
+                        'stroke': '#ffffff',
+                        'stroke-width': 1
+                    });
+                }
+            }
+            error_text.hide();
+            $('#options_spinner').hide();
+            $('#paths').val(JSON.stringify(response.paths, null, 4));
+        }
+    };
+    $('#options').ajaxForm(step_2_options);
+</script>
 {% endblock %}

@@ -170,15 +170,21 @@ def upload_shapefile(request):
             shp=request.FILES.get('shp'),
             shx=request.FILES.get('shx'),
         )
-        ds = DataSource(new_collection.shp.path)
-        layer = ds[0]
-        load_shapes(layer, new_collection)
-        data = {
-            'name': new_collection.name,
-            'slug': new_collection.slug,
-            'fields': layer.fields,
-        }
-        return HttpResponse(json.dumps(data), content_type='text/json')
+        try:
+            ds = DataSource(new_collection.shp.path)
+            layer = ds[0]
+            load_shapes(layer, new_collection)
+            data = {
+                'name': new_collection.name,
+                'slug': new_collection.slug,
+                'fields': layer.fields,
+            }
+            return HttpResponse(json.dumps(data), content_type='text/html')
+        except:
+            new_collection.delete()
+            response = HttpResponse()
+            response.status_code = 500
+            return response
 
 
 def shape_setup(request):
@@ -214,8 +220,7 @@ def shape_setup(request):
             'centroid': centroid,
             'max_coords': [max_coords[0] + translate[0], max_coords[1] + translate[1]],
         }
-
-        return HttpResponse(json.dumps(data), content_type='text/json')
+        return HttpResponse(json.dumps(data), content_type='text/html')
 
 
 
