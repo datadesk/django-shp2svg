@@ -62,7 +62,7 @@
     <section id="in_db">
         <h2>Choose a shapefile from the database</h2>
         <div class="row">
-        {% for i in collections %}
+        {% for i in shapefiles %}
             <div class="span2">
                 <a href="{{ i.get_absolute_url }}">
                     {{ i.name }}

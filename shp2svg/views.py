@@ -5,7 +5,7 @@ from django.shortcuts import render
 from django.shortcuts import redirect
 from django.contrib.gis.gdal import *
 from django.http import Http404, HttpResponse
-from shp2svg.models import Shape, ShapeCollection
+from shp2svg.models import Shape, ShapefileContainer
 from django.template.defaultfilters import slugify
 from django.contrib.gis.geos import MultiPolygon, Polygon
 
@@ -42,38 +42,38 @@ def coords_2_path(coord_list):
 
 def index(request):
     context = {
-        'collections': ShapeCollection.objects.all()
+        'shapefiles': ShapefileContainer.objects.all()
     }
     return render(request, 'index.html', context)
 
-def shape_collection(request, slug):
+def shapefile(request, slug):
     try:
-        collection = ShapeCollection.objects.get(slug=slug)
-    except ShapeCollection.DoesNotExist:
+        shapefile = ShapefileContainer.objects.get(slug=slug)
+    except ShapefileContainer.DoesNotExist:
         raise Http404
 
-    ds = DataSource(collection.shp.path)
+    ds = DataSource(shapefile.shp.path)
     layer = ds[0]
     context = {
-        'name': collection.name,
-        'slug': collection.slug,
+        'name': shapefile.name,
+        'slug': shapefile.slug,
         'fields': layer.fields,
     }
-    return render(request, 'collection.html', context)
+    return render(request, 'shapefile.html', context)
 
 def upload_shapefile(request):
     if request.method == 'POST':
         name = request.POST.get('name')
         # Check to see if we already have an object with that name
         try:
-            ShapeCollection.objects.get(name=name)
+            ShapefileContainer.objects.get(name=name)
             invalid_name_response = HttpResponse("The name you chose is already taken.")
             invalid_name_response.status_code = 500
             return invalid_name_response
-        except ShapeCollection.DoesNotExist:
+        except ShapefileContainer.DoesNotExist:
             pass
         # Make the new shape container
-        new_collection = ShapeCollection.objects.create(
+        new_shapefile = ShapefileContainer.objects.create(
             name=name,
             slug=slugify(name),
             dbf=request.FILES.get('dbf'),
@@ -83,9 +83,9 @@ def upload_shapefile(request):
         )
         # See if we can import the shapefile. 
         try:
-            ds = DataSource(new_collection.shp.path)
+            ds = DataSource(new_shapefile.shp.path)
         except:
-            new_collection.delete()
+            new_shapefile.delete()
             response = HttpResponse("There was a problem processing your shapefile.")
             response.status_code = 500
             return response
@@ -106,7 +106,7 @@ def upload_shapefile(request):
                     shape = Shape.objects.create(
                         poly = mp,
                         attributes = json.dumps(attribute_dict),
-                        collection = new_collection,
+                        shapefile = new_shapefile,
                     )
                 except:
                     response = HttpResponse("There was a problem processing your shapefile.")
@@ -116,8 +116,8 @@ def upload_shapefile(request):
                 continue
 
         data = {
-            'name': new_collection.name,
-            'slug': new_collection.slug,
+            'name': new_shapefile.name,
+            'slug': new_shapefile.slug,
             'fields': attribute_fields,
         }
         return HttpResponse(json.dumps(data), content_type='text/html')
@@ -126,8 +126,8 @@ def generate_svg(request):
     if request.method == 'GET':
         slug = request.GET.get('slug')
         try:
-            collection = ShapeCollection.objects.get(slug=slug)
-        except ShapeCollection.DoesNotExist:
+            shapefile = ShapefileContainer.objects.get(slug=slug)
+        except ShapefileContainer.DoesNotExist:
             raise Http404
 
         translate = [0, 0]
@@ -159,7 +159,7 @@ def generate_svg(request):
             centroid = True
         
         # get a projected geoqueryset
-        projected_shapes = collection.get_projected_shapes(srid)
+        projected_shapes = shapefile.get_projected_shapes(srid)
         
         # get the projected extent of the geoqueryset
         x_coords = []

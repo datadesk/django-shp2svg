@@ -17,7 +17,7 @@ def get_shx_path(instance, filename):
     return os.path.join('shapes', instance.slug, instance.slug + '.shx')
 
 
-class ShapeCollection(models.Model):
+class ShapefileContainer(models.Model):
     """
     A model for grouping multiple shapes. Allows
     you to group U.S. States, for example, then export them as
@@ -29,7 +29,6 @@ class ShapeCollection(models.Model):
     prj = models.FileField(upload_to=get_prj_path)
     shp = models.FileField(upload_to=get_shp_path)
     shx = models.FileField(upload_to=get_shx_path)
-
     objects = models.GeoManager()
     
     def __unicode__(self):
@@ -53,7 +52,7 @@ class Shape(models.Model):
     poly = models.MultiPolygonField()
     # Will store the attributes here as JSON
     attributes = models.TextField(blank=True, null=True)
-    collection = models.ForeignKey("ShapeCollection", null=True, blank=True)
+    collection = models.ForeignKey("ShapefileContainer", null=True, blank=True)
     objects = models.GeoManager()
 
     def get_extracted_coords(self):
