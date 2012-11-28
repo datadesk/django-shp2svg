@@ -42,6 +42,9 @@ class ShapeCollection(models.Model):
         """
         return self.shape_set.all().transform(srid)
 
+    def get_absolute_url(self):
+        return '/%s/' % self.slug
+
 
 class Shape(models.Model):
     """

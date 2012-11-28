@@ -129,7 +129,7 @@ def get_scaled_paths(queryset, scale, extent, key, translate=[0,0], centroid=Fal
             centroid = i.poly.centroid.coords
             translated_centroid = translate_coords([centroid], extent)
             translated_centroid = translated_centroid[0]
-            scaled_centroid = [int(translated_centroid[0] * scale), int(translated_centroid[1] * scale)]
+            scaled_centroid = [int(translated_centroid[0] * scale) + translate[0], int(translated_centroid[1] * scale) + translate[1]]
 
             path = ''
             for i in scaled_coords:
@@ -196,40 +196,45 @@ def shape_setup(request):
             raise Http404
 
         translate = [0, 0]
+        # some validation on the user input
+        invalid_int_response = HttpResponse("Please enter a valid integer.")
+        invalid_int_response.status_code = 500
+
         if request.GET.get('translate_x'):
-            translate[0] = int(request.GET.get('translate_x'))
+            try:
+                translate[0] = int(request.GET.get('translate_x'))
+            except ValueError:
+                return invalid_int_response
 
         if request.GET.get('translate_y'):
-            translate[1] = int(request.GET.get('translate_y'))
-
-        max_size = int(request.GET.get('max_size'))
-        srid = int(request.GET.get('srid'))
-        key = request.GET.get('key')       
+            try:
+                translate[1] = int(request.GET.get('translate_y'))
+            except ValueError:
+                return invalid_int_response
+        
+        try:
+            max_size = int(request.GET.get('max_size'))
+            srid = int(request.GET.get('srid'))
+        except ValueError:
+            return invalid_int_response
+        
+        key = request.GET.get('key')
         centroid = request.GET.get('centroid', False)
         if centroid == 'on':
             centroid = True
-
+        
         projected_shapes = collection.get_projected_shapes(srid)
         extent = get_projected_extent(projected_shapes)
         scale_factor = get_scale_factor(extent, max_size)
         max_coords = get_scaled_max_coords(extent, scale_factor)
         paths = get_scaled_paths(projected_shapes, scale_factor, extent, key, translate=translate, centroid=centroid)
-
+        
         data = {
             'paths': paths,
             'centroid': centroid,
             'max_coords': [max_coords[0] + translate[0], max_coords[1] + translate[1]],
         }
         return HttpResponse(json.dumps(data), content_type='text/html')
-
-
-
-
-
-
-
-
-
 
 
 def shape_collection(request, slug):
@@ -241,43 +246,11 @@ def shape_collection(request, slug):
     except ShapeCollection.DoesNotExist:
         raise Http404
 
-    # must work in a way to feed in options through the request
-    # in the meantime...
-    translate = [0, 0]
-    max_size = 700
-    srid = 900913
-    key = "postal"
-
-    projected_shapes = collection.get_projected_shapes(srid)
-    extent = get_projected_extent(projected_shapes)
-    scale_factor = get_scale_factor(extent, max_size)
-    max_coords = get_scaled_max_coords(extent, scale_factor)
-    paths = get_scaled_paths(projected_shapes, scale_factor, extent, key, translate=translate)
-
+    ds = DataSource(collection.shp.path)
+    layer = ds[0]
     context = {
-        'collection': collection,
-        'paths': json.dumps(paths),
-        'max_coords': max_coords
+        'name': collection.name,
+        'slug': collection.slug,
+        'fields': layer.fields,
     }
-
     return render(request, 'collection.html', context)
-
-
-
-# def generate_svg(self):
-#     """
-#     Generates an SVG file from the state
-#     """
-#     county_paths = self.get_county_paths()
-#     cities = self.get_top_city_coords()
-#     size = self.get_scaled_max_coords()
-#     template = get_template('svg.html')
-#     svg_string = template.render(Context({
-#         'size': size,
-#         'county_paths': county_paths,
-#         'cities': cities,
-#     }))
-#     # Write the SVG to system
-#     outfile = open(os.path.join(settings.SVG_EXPORT_PATH, '%s.svg' % self.name), "w")
-#     outfile.write(svg_string)
-#     outfile.close()
