@@ -13,69 +13,6 @@ from django.contrib.gis.geos import MultiPolygon, Polygon
 # Some utility functions for processing the SVG paths
 #
 
-def load_shapes(layer, collection):
-    attribute_fields = layer.fields
-    for feature in layer:
-        if feature.geom.geom_type in ['Polygon', 'MultiPolygon']:
-            # Grab a dict of all the attributes
-            attribute_dict = dict( (attr, str(feature[attr].value).decode('latin-1')) for attr in attribute_fields )
-            # convert to multipolygon if necessary
-            if feature.geom.geom_type == 'Polygon':
-                mp = MultiPolygon(feature.geom.geos)
-            else:
-                mp = feature.geom.geos
-            # load in the shape
-            try:
-                shape = Shape.objects.create(
-                    poly = mp,
-                    attributes = json.dumps(attribute_dict),
-                    collection = collection,
-                )
-            except:
-                raise
-        else:
-            continue
-
-def get_projected_extent(geoqueryset):
-    """
-    Returns the min and max x and y coordinates for the collection
-    """
-    x_coords = []
-    y_coords = []
-    for i in geoqueryset:
-        coords = i.poly.extent
-        x_coords.append(coords[0])
-        x_coords.append(coords[2])
-        y_coords.append(coords[1])
-        y_coords.append(coords[3])
-    return (min(x_coords), min(y_coords), max(x_coords), max(y_coords))
-
-def get_scale_factor(extent, max_size):
-    """
-    Provides a scaling constant to convert our translated coordinates to
-    screen pixels.
-    """
-    max_translated_x = abs(extent[2] - extent[0])
-    max_translated_y = abs(extent[3] - extent[1])
-    
-    if max_translated_x > max_translated_y:
-        scaling_factor = max_size / max_translated_x
-    
-    elif max_translated_y > max_translated_x:
-        scaling_factor = max_size / max_translated_y
-    
-    return scaling_factor
-
-def get_scaled_max_coords(extent, scale):
-    """
-    Returns the scaled max x and y coordinates of the state,
-    good for image height and width.
-    """
-    extent = list(extent)
-    y_translated_max = abs(extent[3] - extent[1])
-    x_translated_max = abs(extent[2] - extent[0])
-    return [int(math.ceil(x_translated_max * scale)), int(math.ceil(y_translated_max * scale))]
-
 def translate_coords(coord_list, extent):
     """
     takes a list of coordinates, then translates them to [0, 0]
@@ -144,9 +81,10 @@ def get_scaled_paths(queryset, scale, extent, key, translate=[0,0], centroid=Fal
             for i in scaled_coords:
                 path += coords_2_path(i)
 
-            scaled_coord_set[k] = path   
+            scaled_coord_set[k] = path
     
     return scaled_coord_set
+
 
 #
 # The actual Views
@@ -157,7 +95,6 @@ def index(request):
         'collections': ShapeCollection.objects.all()
     }
     return render(request, 'index.html', context)
-
 
 def upload_shapefile(request):
     if request.method == 'POST':
@@ -170,22 +107,63 @@ def upload_shapefile(request):
             shp=request.FILES.get('shp'),
             shx=request.FILES.get('shx'),
         )
+        
         try:
             ds = DataSource(new_collection.shp.path)
-            layer = ds[0]
-            load_shapes(layer, new_collection)
-            data = {
-                'name': new_collection.name,
-                'slug': new_collection.slug,
-                'fields': layer.fields,
-            }
-            return HttpResponse(json.dumps(data), content_type='text/html')
         except:
             new_collection.delete()
             response = HttpResponse()
             response.status_code = 500
             return response
 
+        layer = ds[0]
+        attribute_fields = layer.fields
+        for feature in layer:
+            if feature.geom.geom_type in ['Polygon', 'MultiPolygon']:
+                # Grab a dict of all the attributes
+                attribute_dict = dict( (attr, str(feature[attr].value).decode('latin-1')) for attr in attribute_fields )
+                # convert to multipolygon if necessary
+                if feature.geom.geom_type == 'Polygon':
+                    mp = MultiPolygon(feature.geom.geos)
+                else:
+                    mp = feature.geom.geos
+                # load in the shape
+                try:
+                    shape = Shape.objects.create(
+                        poly = mp,
+                        attributes = json.dumps(attribute_dict),
+                        collection = new_collection,
+                    )
+                except:
+                    raise
+            else:
+                continue
+
+        load_shapes(layer, new_collection)
+        data = {
+            'name': new_collection.name,
+            'slug': new_collection.slug,
+            'fields': attribute_fields,
+        }
+        return HttpResponse(json.dumps(data), content_type='text/html')
+
+def shape_collection(request, slug):
+    """
+
+    """
+    try:
+        collection = ShapeCollection.objects.get(slug=slug)
+    except ShapeCollection.DoesNotExist:
+        raise Http404
+
+    ds = DataSource(collection.shp.path)
+    layer = ds[0]
+    context = {
+        'name': collection.name,
+        'slug': collection.slug,
+        'fields': layer.fields,
+    }
+    return render(request, 'collection.html', context)
 
 def shape_setup(request):
     if request.method == 'GET':
@@ -223,10 +201,35 @@ def shape_setup(request):
         if centroid == 'on':
             centroid = True
         
+        # get a projected geoqueryset
         projected_shapes = collection.get_projected_shapes(srid)
-        extent = get_projected_extent(projected_shapes)
-        scale_factor = get_scale_factor(extent, max_size)
-        max_coords = get_scaled_max_coords(extent, scale_factor)
+        
+        # get the projected extent of the geoqueryset
+        x_coords = []
+        y_coords = []
+        for i in projected_shapes:
+            coords = i.poly.extent
+            x_coords.append(coords[0])
+            x_coords.append(coords[2])
+            y_coords.append(coords[1])
+            y_coords.append(coords[3])
+        extent = (min(x_coords), min(y_coords), max(x_coords), max(y_coords))
+        
+        # get a constant to scale the coords to the provided max_size
+        max_translated_x = abs(extent[2] - extent[0])
+        max_translated_y = abs(extent[3] - extent[1])
+        if max_translated_x > max_translated_y:
+            scale_factor = max_size / max_translated_x
+        elif max_translated_y > max_translated_x:
+            scale_factor = max_size / max_translated_y
+        
+        # Determine our new max X and Y values
+        extent = list(extent)
+        y_translated_max = abs(extent[3] - extent[1])
+        x_translated_max = abs(extent[2] - extent[0])
+        max_coords = [int(math.ceil(x_translated_max * scale_factor)), int(math.ceil(y_translated_max * scale_factor))]
+
+        # grab all the paths
         paths = get_scaled_paths(projected_shapes, scale_factor, extent, key, translate=translate, centroid=centroid)
         
         data = {
@@ -236,21 +239,3 @@ def shape_setup(request):
         }
         return HttpResponse(json.dumps(data), content_type='text/html')
 
-
-def shape_collection(request, slug):
-    """
-
-    """
-    try:
-        collection = ShapeCollection.objects.get(slug=slug)
-    except ShapeCollection.DoesNotExist:
-        raise Http404
-
-    ds = DataSource(collection.shp.path)
-    layer = ds[0]
-    context = {
-        'name': collection.name,
-        'slug': collection.slug,
-        'fields': layer.fields,
-    }
-    return render(request, 'collection.html', context)
