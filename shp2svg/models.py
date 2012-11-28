@@ -52,7 +52,7 @@ class Shape(models.Model):
     poly = models.MultiPolygonField()
     # Will store the attributes here as JSON
     attributes = models.TextField(blank=True, null=True)
-    collection = models.ForeignKey("ShapefileContainer", null=True, blank=True)
+    shapefile = models.ForeignKey("ShapefileContainer", null=True, blank=True)
     objects = models.GeoManager()
 
     def get_extracted_coords(self):
