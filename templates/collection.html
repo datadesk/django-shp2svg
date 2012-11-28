@@ -152,13 +152,14 @@
     <section id="error">
         <div class="alert alert-error" >
             <h4>Warning</h4>
-            Something went wrong, please double check your options and try again.
+            <span id="warning_text"></span>
         </div>
     </section>
 </div>
 
 <script>
     var error_text = $('#error');
+    var warning_text = $('#warning_text');
 
     function getCookie(name) {
         var cookieValue = null;
@@ -186,7 +187,8 @@
         beforeSend: function () {
             $('#options_spinner').show();
         },
-        error: function () {
+        error: function (error) {
+            warning_text.html(error.responseText);
             error_text.show();
             $('#step_3').hide();
             $('#step_4').hide();

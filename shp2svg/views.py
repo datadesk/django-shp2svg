@@ -15,7 +15,7 @@ from django.contrib.gis.geos import MultiPolygon, Polygon
 
 def translate_coords(coord_list, extent):
     """
-    takes a list of coordinates, then translates them to [0, 0]
+    Takes a list of coordinates and translates them to [0, 0]
     """
     x_min = extent[0]
     y_min = extent[1]
@@ -28,7 +28,7 @@ def translate_coords(coord_list, extent):
 
 def coords_2_path(coord_list):
     """
-    Takes a list of coordinates and returns an SVG path element
+    Takes a list of coordinates and returns an SVG path
     """
     path = 'M%s,%s' % (coord_list[0][0], coord_list[0][1])
     for i in coord_list[1:]:
@@ -46,9 +46,33 @@ def index(request):
     }
     return render(request, 'index.html', context)
 
+def shape_collection(request, slug):
+    try:
+        collection = ShapeCollection.objects.get(slug=slug)
+    except ShapeCollection.DoesNotExist:
+        raise Http404
+
+    ds = DataSource(collection.shp.path)
+    layer = ds[0]
+    context = {
+        'name': collection.name,
+        'slug': collection.slug,
+        'fields': layer.fields,
+    }
+    return render(request, 'collection.html', context)
+
 def upload_shapefile(request):
     if request.method == 'POST':
         name = request.POST.get('name')
+        # Check to see if we already have an object with that name
+        try:
+            ShapeCollection.objects.get(name=name)
+            invalid_name_response = HttpResponse("The name you chose is already taken.")
+            invalid_name_response.status_code = 500
+            return invalid_name_response
+        except ShapeCollection.DoesNotExist:
+            pass
+        # Make the new shape container
         new_collection = ShapeCollection.objects.create(
             name=name,
             slug=slugify(name),
@@ -57,12 +81,12 @@ def upload_shapefile(request):
             shp=request.FILES.get('shp'),
             shx=request.FILES.get('shx'),
         )
-        
+        # See if we can import the shapefile. 
         try:
             ds = DataSource(new_collection.shp.path)
         except:
             new_collection.delete()
-            response = HttpResponse()
+            response = HttpResponse("There was a problem processing your shapefile.")
             response.status_code = 500
             return response
 
@@ -85,11 +109,12 @@ def upload_shapefile(request):
                         collection = new_collection,
                     )
                 except:
-                    raise
+                    response = HttpResponse("There was a problem processing your shapefile.")
+                    response.status_code = 500
+                    return response
             else:
                 continue
 
-        load_shapes(layer, new_collection)
         data = {
             'name': new_collection.name,
             'slug': new_collection.slug,
@@ -97,25 +122,7 @@ def upload_shapefile(request):
         }
         return HttpResponse(json.dumps(data), content_type='text/html')
 
-def shape_collection(request, slug):
-    """
-
-    """
-    try:
-        collection = ShapeCollection.objects.get(slug=slug)
-    except ShapeCollection.DoesNotExist:
-        raise Http404
-
-    ds = DataSource(collection.shp.path)
-    layer = ds[0]
-    context = {
-        'name': collection.name,
-        'slug': collection.slug,
-        'fields': layer.fields,
-    }
-    return render(request, 'collection.html', context)
-
-def shape_setup(request):
+def generate_svg(request):
     if request.method == 'GET':
         slug = request.GET.get('slug')
         try:
@@ -157,12 +164,18 @@ def shape_setup(request):
         # get the projected extent of the geoqueryset
         x_coords = []
         y_coords = []
-        for i in projected_shapes:
-            coords = i.poly.extent
-            x_coords.append(coords[0])
-            x_coords.append(coords[2])
-            y_coords.append(coords[1])
-            y_coords.append(coords[3])
+        # Wrap this in a try/except to return any errors we hit with the projection
+        try:
+            for i in projected_shapes:
+                coords = i.poly.extent
+                x_coords.append(coords[0])
+                x_coords.append(coords[2])
+                y_coords.append(coords[1])
+                y_coords.append(coords[3])
+        except:
+            response = HttpResponse("There was a problem projecting your shapefile. Please try a different SRID.")
+            response.status_code = 500
+            return response
         extent = (min(x_coords), min(y_coords), max(x_coords), max(y_coords))
         
         # get a constant to scale the coords to the provided max_size
@@ -197,7 +210,7 @@ def shape_setup(request):
             for t in translated_coords:
                 scaled_list = []
                 for coord_set in t:
-                    scaled_set = (format(( coord_set[0] * scale) + translate[0], '.1f'), format(( coord_set[1] * scale)  + translate[1], '.1f'))
+                    scaled_set = (format(( coord_set[0] * scale_factor) + translate[0], '.1f'), format(( coord_set[1] * scale_factor)  + translate[1], '.1f'))
                     scaled_list.append(scaled_set)
                 scaled_coords.append(scaled_list)
             
@@ -206,7 +219,7 @@ def shape_setup(request):
                 centroid = i.poly.centroid.coords
                 translated_centroid = translate_coords([centroid], extent)
                 translated_centroid = translated_centroid[0]
-                scaled_centroid = [int(translated_centroid[0] * scale) + translate[0], int(translated_centroid[1] * scale) + translate[1]]
+                scaled_centroid = [int(translated_centroid[0] * scale_factor) + translate[0], int(translated_centroid[1] * scale_factor) + translate[1]]
                 
                 path = ''
                 for i in scaled_coords:
