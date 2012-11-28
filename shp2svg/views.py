@@ -36,58 +36,8 @@ def coords_2_path(coord_list):
     path += 'Z'
     return path.replace('-0.0', '0').replace('0.0', '0').replace('.0', '')
 
-def get_scaled_paths(queryset, scale, extent, key, translate=[0,0], centroid=False):
-    """
-    Returns a dict with each item in the queryset and a list of scaled coordinates.
-    """
-    scaled_coord_set = {}
-    for i in queryset:
-        # load in the attribute dict
-        attrs = json.loads(i.attributes)
-        k = attrs.get(key)
-        # First grab the coordinates to play with
-        coords = i.get_extracted_coords()
-        # Loop through each set and translate them
-        translated_coords = []
-        for c in coords:
-            translated_coords.append(translate_coords(c, extent))
-        
-        # Then loop through our translated coords and scale them
-        scaled_coords = []
-        for t in translated_coords:
-            scaled_list = []
-            for coord_set in t:
-                scaled_set = (format(( coord_set[0] * scale) + translate[0], '.1f'), format(( coord_set[1] * scale)  + translate[1], '.1f'))
-                scaled_list.append(scaled_set)
-            scaled_coords.append(scaled_list)
-        
-        # Now to grab a translated/scaled centroid for each shape
-        if centroid:
-            centroid = i.poly.centroid.coords
-            translated_centroid = translate_coords([centroid], extent)
-            translated_centroid = translated_centroid[0]
-            scaled_centroid = [int(translated_centroid[0] * scale) + translate[0], int(translated_centroid[1] * scale) + translate[1]]
-
-            path = ''
-            for i in scaled_coords:
-                path += coords_2_path(i)
-
-            scaled_coord_set[k] = {
-                'path': path,
-                'centroid': scaled_centroid,
-            }
-        else:
-            path = ''
-            for i in scaled_coords:
-                path += coords_2_path(i)
-
-            scaled_coord_set[k] = path
-    
-    return scaled_coord_set
-
-
 #
-# The actual Views
+# Views
 #
 
 def index(request):
@@ -229,8 +179,49 @@ def shape_setup(request):
         x_translated_max = abs(extent[2] - extent[0])
         max_coords = [int(math.ceil(x_translated_max * scale_factor)), int(math.ceil(y_translated_max * scale_factor))]
 
-        # grab all the paths
-        paths = get_scaled_paths(projected_shapes, scale_factor, extent, key, translate=translate, centroid=centroid)
+        # generate all the paths
+        paths = {}
+        for i in projected_shapes:
+            # load in the attribute dict
+            attrs = json.loads(i.attributes)
+            k = attrs.get(key)
+            # First grab the coordinates to play with
+            coords = i.get_extracted_coords()
+            # Loop through each set and translate them
+            translated_coords = []
+            for c in coords:
+                translated_coords.append(translate_coords(c, extent))
+            
+            # Then loop through our translated coords and scale them
+            scaled_coords = []
+            for t in translated_coords:
+                scaled_list = []
+                for coord_set in t:
+                    scaled_set = (format(( coord_set[0] * scale) + translate[0], '.1f'), format(( coord_set[1] * scale)  + translate[1], '.1f'))
+                    scaled_list.append(scaled_set)
+                scaled_coords.append(scaled_list)
+            
+            # Now to grab a translated/scaled centroid for each shape
+            if centroid:
+                centroid = i.poly.centroid.coords
+                translated_centroid = translate_coords([centroid], extent)
+                translated_centroid = translated_centroid[0]
+                scaled_centroid = [int(translated_centroid[0] * scale) + translate[0], int(translated_centroid[1] * scale) + translate[1]]
+                
+                path = ''
+                for i in scaled_coords:
+                    path += coords_2_path(i)
+
+                paths[k] = {
+                    'path': path,
+                    'centroid': scaled_centroid,
+                }
+            else:
+                path = ''
+                for i in scaled_coords:
+                    path += coords_2_path(i)
+
+                paths[k] = path
         
         data = {
             'paths': paths,
