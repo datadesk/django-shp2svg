@@ -21,10 +21,10 @@
             margin-top:40px;
         }
         #step_1 .control-label {
-            width:62px;
+            width:75px;
         }
         #step_1 .controls {
-            margin-left:85px;
+            margin-left:95px;
         }
         #step_1 .control-group {
             margin-bottom:7px;
@@ -37,6 +37,9 @@
         }
         div.progress.active {
             width:70px;
+        }
+        .popover {
+            text-align:center;
         }
     </style>
 {% endblock %}
@@ -85,31 +88,31 @@
                     <p>Shapefiles come in four parts. Make sure to include the .dbf, .prj, .shp and .shx files.</p>
 
                     <div class="control-group">
-                        <label class="control-label" for="name">Name</label>
+                        <label class="control-label" for="name">Name &#42;</label>
                         <div class="controls">
                             <input style="margin-bottom:15px" required="required" class="required" type="text" id="name" name="name" />
                         </div>
                     </div>
                     <div class="control-group">
-                        <label class="control-label" for="dbf">DBF File</label>
+                        <label class="control-label" for="dbf">DBF File &#42;</label>
                         <div class="controls">
                             <input type="file" required="required" class="required dbf" id="dbf" name="dbf" />
                         </div>
                     </div>
                     <div class="control-group">
-                        <label class="control-label" for="prj">PRJ File</label>
+                        <label class="control-label" for="prj">PRJ File &#42;</label>
                         <div class="controls">
                             <input type="file" required="required" class="required prj" id="prj" name="prj" />
                         </div>
                     </div>
                     <div class="control-group">
-                        <label class="control-label" for="shp">SHP File</label>
+                        <label class="control-label" for="shp">SHP File &#42;</label>
                         <div class="controls">
                             <input type="file" required="required" class="required shp" id="shp" name="shp" />
                         </div>
                     </div>
                     <div class="control-group">
-                        <label class="control-label" for="shx">SHX File</label>
+                        <label class="control-label" for="shx">SHX File &#42;</label>
                         <div class="controls">
                             <input type="file" required="required" class="required shx" id="shx" name="shx" />
                         </div>
@@ -150,13 +153,13 @@
                     </div>
 
                     <div class="control-group">
-                        <label class="control-label" for="max_size">Max size</label>
+                        <label class="control-label" for="max_size">Max size &#42; <i class="icon-question-sign" data-placement="right" data-trigger="hover" data-original-title="Max Size" data-content="The maximum width (if the shapefile horizontal) or height (if it's vertical) in pixels."></i></label>
                         <div class="controls">
                             <input type="text" required="required" class="digits required" id="max_size" name="max_size" />
                         </div>
                     </div>
                     <div class="control-group">
-                        <label class="control-label" for="srid">SRID</label>
+                        <label class="control-label" for="srid">SRID <i class="icon-question-sign" data-placement="right" data-trigger="hover" data-original-title="SRID" data-content="Choose an appropriate projection."></i></label>
                         <div class="controls">
                             <select id="srid" name="srid">
                                 {% include 'srids.html' %}
@@ -165,13 +168,13 @@
                     </div>
 
                     <div class="control-group">
-                        <label class="control-label" for="translate_x">Translate X</label>
+                        <label class="control-label" for="translate_x">Translate X <i class="icon-question-sign" data-placement="right" data-trigger="hover" data-original-title="Translate X" data-content="Translate the paths along the x-axis."></i></label>
                         <div class="controls">
                             <input type="text" id="translate_x" class="digits" name="translate_x" />
                         </div>
                     </div>
                     <div class="control-group">
-                        <label class="control-label" for="translate_y">Translate Y</label>
+                        <label class="control-label" for="translate_y">Translate Y <i class="icon-question-sign" data-placement="right" data-trigger="hover" data-original-title="Translate Y" data-content="Translate the paths along the y-axis."></i></label>
                         <div class="controls">
                             <input type="text" id="translate_y" class="digits" name="translate_y" />
                         </div>
@@ -248,6 +251,7 @@
 
     $('#files').validate();
     $('#options').validate();
+    $('i').popover();
 
     function getCookie(name) {
         var cookieValue = null;
