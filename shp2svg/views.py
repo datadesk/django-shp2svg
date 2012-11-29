@@ -3,6 +3,7 @@ from django.conf import settings
 from django.shortcuts import render
 from django.shortcuts import redirect
 from django.contrib.gis.gdal import *
+from django.template import RequestContext
 from django.views.generic.base import View
 from django.utils import simplejson as json
 from django.http import Http404, HttpResponse
@@ -104,7 +105,9 @@ class SVGResponseMixin(object):
         Returns a CSV file response, transforming 'context' to make the payload.
         """
         template = get_template('svg.html')
-        response = HttpResponse(template.render(context), mimetype='image/svg+xml')
+        context = RequestContext(self.request, context)
+        svg = template.render(context)
+        response = HttpResponse(svg, mimetype='image/svg+xml')
         response['Content-Disposition'] = 'attachment; filename=shp2svg.svg'
         return response
 
@@ -262,6 +265,7 @@ class GenerateSVG(SVGResponseMixin, JSONResponseMixin, View):
         
         context = {
             'paths': paths,
+            'url': self.request.get_full_path(),
             'centroid': centroid,
             'max_coords': [max_coords[0] + translate[0], max_coords[1] + translate[1]],
         }
