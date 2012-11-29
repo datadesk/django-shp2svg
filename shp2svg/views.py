@@ -66,7 +66,7 @@ def upload_shapefile(request):
         name = request.POST.get('name')
         # Check to see if we already have an object with that name
         try:
-            ShapefileContainer.objects.get(name=name)
+            ShapefileContainer.objects.get(slug=slugify(name))
             invalid_name_response = HttpResponse("The name you chose is already taken.")
             invalid_name_response.status_code = 500
             return invalid_name_response

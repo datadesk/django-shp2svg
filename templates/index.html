@@ -42,9 +42,6 @@
 {% endblock %}
 
 {% block extra-js %}
-    <script src="{{ STATIC_URL }}js/jquery.form.js"></script>
-    <script src="{{ STATIC_URL }}js/json2.js"></script>
-
     <script id="option_template" type="text/jst">
         <% _.each(options, function (option) { %>
             <option value="<%= option %>"><%= option %></option>
@@ -90,31 +87,31 @@
                     <div class="control-group">
                         <label class="control-label" for="name">Name</label>
                         <div class="controls">
-                            <input style="margin-bottom:15px" required="required" type="text" id="name" name="name" />
+                            <input style="margin-bottom:15px" required="required" class="required" type="text" id="name" name="name" />
                         </div>
                     </div>
                     <div class="control-group">
                         <label class="control-label" for="dbf">DBF File</label>
                         <div class="controls">
-                            <input type="file" required="required" id="dbf" name="dbf" />
+                            <input type="file" required="required" class="required dbf" id="dbf" name="dbf" />
                         </div>
                     </div>
                     <div class="control-group">
                         <label class="control-label" for="prj">PRJ File</label>
                         <div class="controls">
-                            <input type="file" required="required" id="prj" name="prj" />
+                            <input type="file" required="required" class="required prj" id="prj" name="prj" />
                         </div>
                     </div>
                     <div class="control-group">
                         <label class="control-label" for="shp">SHP File</label>
                         <div class="controls">
-                            <input type="file" required="required" id="shp" name="shp" />
+                            <input type="file" required="required" class="required shp" id="shp" name="shp" />
                         </div>
                     </div>
                     <div class="control-group">
                         <label class="control-label" for="shx">SHX File</label>
                         <div class="controls">
-                            <input type="file" required="required" id="shx" name="shx" />
+                            <input type="file" required="required" class="required shx" id="shx" name="shx" />
                         </div>
                     </div>
                     <div class="form-actions" id="step_1_submit">
@@ -155,7 +152,7 @@
                     <div class="control-group">
                         <label class="control-label" for="max_size">Max size</label>
                         <div class="controls">
-                            <input type="text" required="required" id="max_size" name="max_size" />
+                            <input type="text" required="required" class="digits required" id="max_size" name="max_size" />
                         </div>
                     </div>
                     <div class="control-group">
@@ -170,13 +167,13 @@
                     <div class="control-group">
                         <label class="control-label" for="translate_x">Translate X</label>
                         <div class="controls">
-                            <input type="text" id="translate_x" name="translate_x" />
+                            <input type="text" id="translate_x" class="digits" name="translate_x" />
                         </div>
                     </div>
                     <div class="control-group">
                         <label class="control-label" for="translate_y">Translate Y</label>
                         <div class="controls">
-                            <input type="text" id="translate_y" name="translate_y" />
+                            <input type="text" id="translate_y" class="digits" name="translate_y" />
                         </div>
                     </div>
                     <div class="control-group">
@@ -233,6 +230,25 @@
     var error_text = $('#error');
     var warning_text = $('#warning_text');
 
+    jQuery.validator.addMethod("dbf", function(value, element) { 
+        return this.optional(element) || /\.dbf$/.test(value); 
+    }, "Please choose a .dbf file.");
+
+    jQuery.validator.addMethod("prj", function(value, element) { 
+        return this.optional(element) || /\.prj$/.test(value); 
+    }, "Please choose a .prj file.");    
+
+    jQuery.validator.addMethod("shp", function(value, element) { 
+        return this.optional(element) || /\.shp$/.test(value); 
+    }, "Please choose a .shp file.");
+
+    jQuery.validator.addMethod("shx", function(value, element) { 
+        return this.optional(element) || /\.shx$/.test(value); 
+    }, "Please choose a .shx file.");
+
+    $('#files').validate();
+    $('#options').validate();
+
     function getCookie(name) {
         var cookieValue = null;
         if (document.cookie && document.cookie != '') {
@@ -255,9 +271,26 @@
         return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
     }
 
+    var validate_step_1 = function (xhr, settings) { 
+        console.log(xhr);
+        console.log(settings);
+     
+        // var usernameValue = $('input[name=username]').fieldValue(); 
+        // var passwordValue = $('input[name=password]').fieldValue(); 
+     
+        // usernameValue and passwordValue are arrays but we can do simple 
+        // "not" tests to see if the arrays are empty 
+/*        if (!usernameValue[0] || !passwordValue[0]) { 
+            alert('Please enter a value for both Username and Password'); 
+            return false; 
+        } 
+        alert('Both fields contain values.'); */
+    }
+
     var step_1_options = {
         crossDomain: false, // obviates need for sameOrigin test
         beforeSend: function(xhr, settings) {
+            validate_step_1(xhr, settings);
             if (!csrfSafeMethod(settings.type)) {
                 xhr.setRequestHeader("X-CSRFToken", csrftoken);
             }

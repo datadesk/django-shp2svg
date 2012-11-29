@@ -84,7 +84,7 @@
                     <div class="control-group">
                         <label class="control-label" for="max_size">Max size</label>
                         <div class="controls">
-                            <input type="text" required="required" id="max_size" name="max_size" />
+                            <input type="text" required="required" class="required digits" id="max_size" name="max_size" />
                         </div>
                     </div>
                     <div class="control-group">
@@ -99,13 +99,13 @@
                     <div class="control-group">
                         <label class="control-label" for="translate_x">Translate X</label>
                         <div class="controls">
-                            <input type="text" id="translate_x" name="translate_x" />
+                            <input type="text" id="translate_x" class="digits" name="translate_x" />
                         </div>
                     </div>
                     <div class="control-group">
                         <label class="control-label" for="translate_y">Translate Y</label>
                         <div class="controls">
-                            <input type="text" id="translate_y" name="translate_y" />
+                            <input type="text" id="translate_y" class="digits" name="translate_y" />
                         </div>
                     </div>
                     <div class="control-group">
@@ -160,6 +160,8 @@
 <script>
     var error_text = $('#error');
     var warning_text = $('#warning_text');
+
+    $('#options').validate();
 
     function getCookie(name) {
         var cookieValue = null;
