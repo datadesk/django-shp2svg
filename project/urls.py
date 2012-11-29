@@ -8,5 +8,5 @@ urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
     url(r'^upload_shape/', views.upload_shapefile),
     url(r'^setup/', views.GenerateSVG.as_view()),
-    url(r'^(?P<slug>[-\d\w]+)/$', views.shapefile),
+    url(r'^(?P<slug>[-\d\w]+)/$', views.shapefile_detail),
 )

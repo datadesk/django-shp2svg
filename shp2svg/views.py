@@ -19,7 +19,7 @@ def index(request):
     }
     return render(request, 'index.html', context)
 
-def shapefile(request, slug):
+def shapefile_detail(request, slug):
     try:
         shapefile = ShapefileContainer.objects.get(slug=slug)
     except ShapefileContainer.DoesNotExist:
@@ -32,7 +32,7 @@ def shapefile(request, slug):
         'slug': shapefile.slug,
         'fields': layer.fields,
     }
-    return render(request, 'shapefile.html', context)
+    return render(request, 'shapefilecontainer_detail.html', context)
 
 def upload_shapefile(request):
     if request.method == 'POST':
