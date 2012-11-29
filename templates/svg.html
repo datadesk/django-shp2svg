@@ -3,8 +3,17 @@
 <svg version="1.1" 
     xmlns="http://www.w3.org/2000/svg"
     xmlns:xlink="http://www.w3.org/1999/xlink"
-    x="0px" y="0px" width="970" height="560" xml:space="preserve">
-{% for key, value in data.items %}
-        <path id="key" d="{{ value.path }}" stroke-width="1" stroke="#ffffff" fill="#dddddd" />
-{% endfor %}
+    x="0px" y="0px" width="{{ max_coords.0 }}" height="{{ max_coords.1 }}" xml:space="preserve">
+{% if centroid %}
+    {% for key, value in paths.items %}
+        <g id="{{ key }}">
+            <path d="{{ value.path }}" stroke-width="1" stroke="#ffffff" fill="#dddddd" />
+            <circle cx="{{ value.centroid.0 }}" cy="{{ value.centroid.1 }}" r="1.5" fill="#000000" stroke="#000000" stroke-width="0"></circle>
+        </g>
+    {% endfor %}
+{% else %}
+    {% for key, value in paths.items %}
+        <path id="{{ key }}" d="{{ value }}" stroke-width="1" stroke="#ffffff" fill="#dddddd" />
+    {% endfor %}
+{% endif %}
 </svg>

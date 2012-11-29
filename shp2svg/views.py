@@ -1,44 +1,16 @@
 import math
-import json
 from django.conf import settings
 from django.shortcuts import render
 from django.shortcuts import redirect
 from django.contrib.gis.gdal import *
+from django.views.generic.base import View
+from django.utils import simplejson as json
 from django.http import Http404, HttpResponse
-from shp2svg.models import Shape, ShapefileContainer
+from django.template.loader import get_template
 from django.template.defaultfilters import slugify
+from shp2svg.models import Shape, ShapefileContainer
 from django.contrib.gis.geos import MultiPolygon, Polygon
 
-#
-# Some utility functions for processing the SVG paths
-#
-
-def translate_coords(coord_list, extent):
-    """
-    Takes a list of coordinates and translates them to [0, 0]
-    """
-    x_min = extent[0]
-    y_min = extent[1]
-    y_translated_max = abs(extent[3] - extent[1])
-    translated_coords = []
-    for i in coord_list:
-        new_coords = (i[0] - x_min, y_translated_max - (i[1] - y_min))
-        translated_coords.append(new_coords)
-    return translated_coords
-
-def coords_2_path(coord_list):
-    """
-    Takes a list of coordinates and returns an SVG path
-    """
-    path = 'M%s,%s' % (coord_list[0][0], coord_list[0][1])
-    for i in coord_list[1:]:
-        path += 'L%s,%s' % (i[0], i[1])
-    path += 'Z'
-    return path.replace('-0.0', '0').replace('0.0', '0').replace('.0', '')
-
-#
-# Views
-#
 
 def index(request):
     context = {
@@ -122,9 +94,61 @@ def upload_shapefile(request):
         }
         return HttpResponse(json.dumps(data), content_type='text/html')
 
-def generate_svg(request):
-    if request.method == 'GET':
-        slug = request.GET.get('slug')
+
+class SVGResponseMixin(object):
+    """
+    A mixin that can be used to render an SVG response.
+    """
+    def render_to_response(self, context, **response_kwargs):
+        """
+        Returns a CSV file response, transforming 'context' to make the payload.
+        """
+        template = get_template('svg.html')
+        response = HttpResponse(template.render(context), mimetype='image/svg+xml')
+        response['Content-Disposition'] = 'attachment; filename=shp2svg.svg'
+        return response
+
+
+class JSONResponseMixin(object):
+    """
+    A mixin for rendering a JSON as an AJAX response. Where the 'JSON' is actually
+    sent as a text/html mimetype to avoid an awkward bug in IE.
+    """
+    def render_to_response(self, context, **response_kwargs):
+        return HttpResponse(json.dumps(context), content_type='text/html')
+
+
+class GenerateSVG(SVGResponseMixin, JSONResponseMixin, View):
+    
+    def translate_coords(self, coord_list, extent):
+        """
+        Takes a list of coordinates and translates them to [0, 0]
+        """
+        x_min = extent[0]
+        y_min = extent[1]
+        y_translated_max = abs(extent[3] - extent[1])
+        translated_coords = []
+        for i in coord_list:
+            new_coords = (i[0] - x_min, y_translated_max - (i[1] - y_min))
+            translated_coords.append(new_coords)
+        return translated_coords
+
+    def coords_2_path(self, coord_list):
+        """
+        Takes a list of coordinates and returns an SVG path
+        """
+        if len(coord_list) == 1:
+            path = 'M%s,%sZ' % (coord_list[0][0], coord_list[0][1])
+        else:
+            path = 'M%s,%s' % (coord_list[0][0], coord_list[0][1])
+            for i in coord_list[1:]:
+                path += 'L%s,%s' % (i[0], i[1])
+            path += 'Z'
+        return path.replace('-0.0', '0').replace('0.0', '0').replace('.0', '')
+
+    def get(self, request, *args, **kwargs):
+        self.format = self.request.GET.get('format', 'json')
+        slug = self.request.GET.get('slug')
         try:
             shapefile = ShapefileContainer.objects.get(slug=slug)
         except ShapefileContainer.DoesNotExist:
@@ -135,26 +159,26 @@ def generate_svg(request):
         invalid_int_response = HttpResponse("Please enter a valid integer.")
         invalid_int_response.status_code = 500
 
-        if request.GET.get('translate_x'):
+        if self.request.GET.get('translate_x'):
             try:
-                translate[0] = int(request.GET.get('translate_x'))
+                translate[0] = int(self.request.GET.get('translate_x'))
             except ValueError:
                 return invalid_int_response
 
-        if request.GET.get('translate_y'):
+        if self.request.GET.get('translate_y'):
             try:
-                translate[1] = int(request.GET.get('translate_y'))
+                translate[1] = int(self.request.GET.get('translate_y'))
             except ValueError:
                 return invalid_int_response
         
         try:
-            max_size = int(request.GET.get('max_size'))
-            srid = int(request.GET.get('srid'))
+            max_size = int(self.request.GET.get('max_size'))
+            srid = int(self.request.GET.get('srid'))
         except ValueError:
             return invalid_int_response
         
-        key = request.GET.get('key')
-        centroid = request.GET.get('centroid', False)
+        key = self.request.GET.get('key')
+        centroid = self.request.GET.get('centroid', False)
         if centroid == 'on':
             centroid = True
         
@@ -191,7 +215,7 @@ def generate_svg(request):
         y_translated_max = abs(extent[3] - extent[1])
         x_translated_max = abs(extent[2] - extent[0])
         max_coords = [int(math.ceil(x_translated_max * scale_factor)), int(math.ceil(y_translated_max * scale_factor))]
-
+        
         # generate all the paths
         paths = {}
         for i in projected_shapes:
@@ -203,7 +227,7 @@ def generate_svg(request):
             # Loop through each set and translate them
             translated_coords = []
             for c in coords:
-                translated_coords.append(translate_coords(c, extent))
+                translated_coords.append(self.translate_coords(c, extent))
             
             # Then loop through our translated coords and scale them
             scaled_coords = []
@@ -217,13 +241,13 @@ def generate_svg(request):
             # Now to grab a translated/scaled centroid for each shape
             if centroid:
                 centroid = i.poly.centroid.coords
-                translated_centroid = translate_coords([centroid], extent)
+                translated_centroid = self.translate_coords([centroid], extent)
                 translated_centroid = translated_centroid[0]
                 scaled_centroid = [int(translated_centroid[0] * scale_factor) + translate[0], int(translated_centroid[1] * scale_factor) + translate[1]]
                 
                 path = ''
                 for i in scaled_coords:
-                    path += coords_2_path(i)
+                    path += self.coords_2_path(i)
 
                 paths[k] = {
                     'path': path,
@@ -232,14 +256,25 @@ def generate_svg(request):
             else:
                 path = ''
                 for i in scaled_coords:
-                    path += coords_2_path(i)
+                    path += self.coords_2_path(i)
 
                 paths[k] = path
         
-        data = {
+        context = {
             'paths': paths,
             'centroid': centroid,
             'max_coords': [max_coords[0] + translate[0], max_coords[1] + translate[1]],
         }
-        return HttpResponse(json.dumps(data), content_type='text/html')
+        return self.render_to_response(context)
+
+    def render_to_response(self, context, **response_kwargs):
+        """
+        Figures out what type of response is necessary and pulls the trigger.
+        """
+        if self.format == 'json':
+            return JSONResponseMixin.render_to_response(self, context)
+        elif self.format == 'svg':
+            return SVGResponseMixin.render_to_response(self, context)
+        else:
+            return Http404
 
