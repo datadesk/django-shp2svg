@@ -144,7 +144,7 @@
                     <p>First, choose which attribute field you want to use to name your paths.</p>
 
                     <div class="control-group">
-                        <label class="control-label" for="max_size">Key</label>
+                        <label class="control-label" for="max_size">Key <i class="icon-question-sign" data-placement="right" data-trigger="hover" data-original-title="Key" data-content="Each of the shapes needs a unique key for the output. Choose one attribute from the shapefile to key each shape (like a FIPS code) -- and make sure it's unique for every feature."></i></label>
                         <div class="controls">
                             <select required="required" id="key" name="key">
 
@@ -159,24 +159,22 @@
                         </div>
                     </div>
                     <div class="control-group">
-                        <label class="control-label" for="srid">SRID <i class="icon-question-sign" data-placement="right" data-trigger="hover" data-original-title="SRID" data-content="Choose an appropriate projection."></i></label>
+                        <label class="control-label" for="srid">SRID <i class="icon-question-sign" data-placement="right" data-trigger="hover" data-original-title="SRID" data-content="Choose an appropriate projection. Many projections are limited to a certain geographic area and may not work on all shapefiles."></i></label>
                         <div class="controls">
                             <select id="srid" name="srid">
                                 {% include 'srids.html' %}
                             </select>
                         </div>
                     </div>
-
                     <div class="control-group">
-                        <label class="control-label" for="translate_x">Translate X <i class="icon-question-sign" data-placement="right" data-trigger="hover" data-original-title="Translate X" data-content="Translate the paths along the x-axis."></i></label>
+                        <label class="control-label" for="translate_x">Set origin <i class="icon-question-sign" data-placement="right" data-trigger="hover" data-original-title="Set origin" data-content="Choose the starting coordinates for the SVG, from the top left. Defaults to 0,0."></i></label>
                         <div class="controls">
-                            <input type="text" id="translate_x" class="digits" name="translate_x" />
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label class="control-label" for="translate_y">Translate Y <i class="icon-question-sign" data-placement="right" data-trigger="hover" data-original-title="Translate Y" data-content="Translate the paths along the y-axis."></i></label>
-                        <div class="controls">
-                            <input type="text" id="translate_y" class="digits" name="translate_y" />
+                            <div class="input-prepend">
+                                <span class="add-on">X</span><input type="text" id="translate_x" class="digits span1" name="translate_x" />
+                            </div>
+                            <div class="input-prepend">
+                                <span class="add-on">Y</span><input type="text" id="translate_y" class="digits span1" name="translate_y" />
+                            </div>
                         </div>
                     </div>
                     <div class="control-group">
@@ -217,6 +215,7 @@
             <div class="span9">
                 <h2>Get the paths</h2>
                 <textarea id="paths" style="width:100%; height:300px"></textarea>
+                <a href="#" id="download" class="btn">Download SVG</a>
             </div>
         </div>
     </section>
@@ -275,26 +274,9 @@
         return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
     }
 
-    var validate_step_1 = function (xhr, settings) { 
-        console.log(xhr);
-        console.log(settings);
-     
-        // var usernameValue = $('input[name=username]').fieldValue(); 
-        // var passwordValue = $('input[name=password]').fieldValue(); 
-     
-        // usernameValue and passwordValue are arrays but we can do simple 
-        // "not" tests to see if the arrays are empty 
-/*        if (!usernameValue[0] || !passwordValue[0]) { 
-            alert('Please enter a value for both Username and Password'); 
-            return false; 
-        } 
-        alert('Both fields contain values.'); */
-    }
-
     var step_1_options = {
         crossDomain: false, // obviates need for sameOrigin test
         beforeSend: function(xhr, settings) {
-            validate_step_1(xhr, settings);
             if (!csrfSafeMethod(settings.type)) {
                 xhr.setRequestHeader("X-CSRFToken", csrftoken);
             }
@@ -339,6 +321,7 @@
             var response = JSON.parse(response);
             $('#step_3').show();
             $('#step_4').show();
+            $('#download').attr('href', response.url + '&format=svg');
             var svg = document.getElementById('svg');
             svg.innerHTML = '';
             var r = Raphael(svg, response.max_coords[0], response.max_coords[1])

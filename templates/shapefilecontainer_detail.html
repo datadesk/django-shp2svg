@@ -74,7 +74,7 @@
                     <p>First, choose which attribute field you want to use to name your paths.</p>
 
                     <div class="control-group">
-                        <label class="control-label" for="max_size">Key <i class="icon-question-sign" data-placement="right" data-trigger="hover" data-original-title="Key" data-content="Choose one attribute from the shapefile to key your paths. There should be a unique name or value (like a FIPS code) for each polygon."></i></label>
+                        <label class="control-label" for="max_size">Key <i class="icon-question-sign" data-placement="right" data-trigger="hover" data-original-title="Key" data-content="Each of the shapes needs a unique key for the output. Choose one attribute from the shapefile to key each shape (like a FIPS code) -- and make sure it's unique for every feature."></i></label>
                         <div class="controls">
                             <select required="required" id="key" name="key">
                             {% for i in fields %}
@@ -91,7 +91,7 @@
                         </div>
                     </div>
                     <div class="control-group">
-                        <label class="control-label" for="srid">SRID <i class="icon-question-sign" data-placement="right" data-trigger="hover" data-original-title="SRID" data-content="Choose an appropriate projection."></i></label>
+                        <label class="control-label" for="srid">SRID <i class="icon-question-sign" data-placement="right" data-trigger="hover" data-original-title="SRID" data-content="Choose an appropriate projection. Many projections are limited to a certain geographic area and may not work on all shapefiles."></i></label>
                         <div class="controls">
                             <select id="srid" name="srid">
                                 {% include 'srids.html' %}
@@ -100,15 +100,14 @@
                     </div>
 
                     <div class="control-group">
-                        <label class="control-label" for="translate_x">Translate X <i class="icon-question-sign" data-placement="right" data-trigger="hover" data-original-title="Translate X" data-content="Translate the paths along the x-axis."></i></label>
+                        <label class="control-label" for="translate_x">Set origin <i class="icon-question-sign" data-placement="right" data-trigger="hover" data-original-title="Set origin" data-content="Choose the starting coordinates for the SVG, from the top left. Defaults to 0,0."></i></label>
                         <div class="controls">
-                            <input type="text" id="translate_x" class="digits" name="translate_x" />
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label class="control-label" for="translate_y">Translate Y <i class="icon-question-sign" data-placement="right" data-trigger="hover" data-original-title="Translate Y" data-content="Translate the paths along the y-axis."></i></label>
-                        <div class="controls">
-                            <input type="text" id="translate_y" class="digits" name="translate_y" />
+                            <div class="input-prepend">
+                                <span class="add-on">X</span><input type="text" id="translate_x" class="digits span1" name="translate_x" />
+                            </div>
+                            <div class="input-prepend">
+                                <span class="add-on">Y</span><input type="text" id="translate_y" class="digits span1" name="translate_y" />
+                            </div>
                         </div>
                     </div>
                     <div class="control-group">
