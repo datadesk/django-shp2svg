@@ -2,7 +2,7 @@
 
 {% block extra-css %}
     <style type="text/css">
-        section#step_1 {display:block;}
+        section#step_1, #in_db {display:block;}
     </style>
 {% endblock %}
 
@@ -23,8 +23,8 @@
         <h2>Choose a shapefile from the database</h2>
         <div class="row">
         {% for i in shapefiles %}
-            <div class="span2 well well-small">
-                <a href="{{ i.get_absolute_url }}">
+            <div class="span2">
+                &bull;<a href="{{ i.get_absolute_url }}">
                     {{ i.name }}
                 </a>
             </div>
