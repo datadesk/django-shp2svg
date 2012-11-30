@@ -5,13 +5,42 @@ from django.shortcuts import redirect
 from django.contrib.gis.gdal import *
 from django.template import RequestContext
 from django.views.generic.base import View
+from django.contrib.sitemaps import Sitemap
 from django.utils import simplejson as json
+from django.core.urlresolvers import reverse
 from django.http import Http404, HttpResponse
 from django.template.loader import get_template
 from django.template.defaultfilters import slugify
 from shp2svg.models import Shape, ShapefileContainer
 from django.contrib.gis.geos import MultiPolygon, Polygon
 
+#
+# Sitemaps
+#
+
+class ShapefileContainerSitemap(Sitemap):
+    changefreq = "daily"
+
+    def items(self):
+        return ShapefileContainer.objects.filter(is_permanent=True)
+
+
+class Sitemap(Sitemap):
+    def __init__(self, names):
+        self.names = names
+
+    def items(self):
+        return self.names
+
+    def changefreq(self, obj):
+        return 'daily'
+
+    def location(self, obj):
+        return reverse(obj)
+
+#
+# Content
+#
 
 def index(request):
     context = {
