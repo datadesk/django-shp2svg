@@ -1,5 +1,11 @@
 {% extends "base.html" %}
 
+{% block extra-css %}
+    <style type="text/css">
+        section#step_2 {display:block;}
+    </style>
+{% endblock %}
+
 {% block extra-js %}
     <script src="{{ STATIC_URL }}js/jquery.form.js"></script>
     <script src="{{ STATIC_URL }}js/json2.js"></script>

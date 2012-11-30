@@ -1,5 +1,11 @@
 {% extends "base.html" %}
 
+{% block extra-css %}
+    <style type="text/css">
+        section#step_1 {display:block;}
+    </style>
+{% endblock %}
+
 {% block extra-js %}
     <script id="option_template" type="text/jst">
         <% _.each(options, function (option) { %>
