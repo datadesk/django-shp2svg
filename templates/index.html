@@ -143,62 +143,7 @@
             </div>
             <div class="span9">
                 <h2>Choose your options</h2>
-
-                <form class="form-horizontal" action="/setup/" method="GET" id="options" >
-                    <div style="display:none">
-                        <input type="hidden" id="slug" name="slug" value="" />
-                    </div>
-
-                    <p>First, choose which attribute field you want to use to name your paths. Then, choose a size and projection for the output. If you need more information about shapefiles, <a href="http://en.wikipedia.org/wiki/Shapefile">Wikipedia has a great entry</a> you should check out. For help choosing an appropriate SRID you can start at <a href="http://spatialreference.org/">spatialreference.org</a> or the <a href="http://en.wikipedia.org/wiki/Map_projections">Wikipedia entry on map projections</a>.</p>
-
-                    <div class="control-group">
-                        <label class="control-label" for="max_size">Key <i class="icon-question-sign" data-placement="right" data-trigger="hover" data-original-title="Key" data-content="Each of the shapes needs a unique key for the output. Choose one attribute from the shapefile to key each shape (like a FIPS code) -- and make sure it's unique for every feature."></i></label>
-                        <div class="controls">
-                            <select required="required" id="key" name="key">
-
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="control-group">
-                        <label class="control-label" for="max_size">Max size &#42; <i class="icon-question-sign" data-placement="right" data-trigger="hover" data-original-title="Max Size" data-content="The maximum width (if the shapefile horizontal) or height (if it's vertical) in pixels."></i></label>
-                        <div class="controls">
-                            <input type="text" required="required" class="digits required" id="max_size" name="max_size" />
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label class="control-label" for="srid">SRID <i class="icon-question-sign" data-placement="right" data-trigger="hover" data-original-title="SRID" data-content="Choose an appropriate projection. Many projections are limited to a certain geographic area and may not work on all shapefiles."></i></label>
-                        <div class="controls">
-                            <select id="srid" name="srid">
-                                {% include 'srids.html' %}
-                            </select>
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <label class="control-label" for="translate_x">Set origin <i class="icon-question-sign" data-placement="right" data-trigger="hover" data-original-title="Set origin" data-content="Choose the starting coordinates for the SVG, from the top left. Defaults to 0,0."></i></label>
-                        <div class="controls">
-                            <div class="input-prepend">
-                                <span class="add-on">X</span><input type="text" id="translate_x" class="digits span1" name="translate_x" />
-                            </div>
-                            <div class="input-prepend">
-                                <span class="add-on">Y</span><input type="text" id="translate_y" class="digits span1" name="translate_y" />
-                            </div>
-                        </div>
-                    </div>
-                    <div class="control-group">
-                        <div class="controls">
-                            <label class="checkbox">
-                                <input id="centroid" name="centroid" type="checkbox" /> Include centroids
-                            </label>
-                        </div>
-                    </div>
-                    <div class="form-actions">
-                        <button type="submit" class="btn">Submit</button>
-                        <div class="progress progress-striped active" id="options_spinner" style="position:absolute; margin-left: 80px; margin-top: -24px; display:none;">
-                            <div class="bar" style="width: 100%;"></div>
-                        </div>
-                    </div>
-                </form>
+                {% include 'setup_form.html' %}
             </div>
         </div>
     </section>

@@ -1,5 +1,6 @@
 import os
 import math
+import shutil
 from django.conf import settings
 from django.contrib.gis.db import models
 
@@ -27,15 +28,21 @@ class ShapefileContainer(models.Model):
     source = models.CharField(max_length=500, blank=True)
     is_permanent = models.BooleanField(default=False)
     slug = models.CharField(max_length=500, unique=True)
-    # dbf = models.FileField(upload_to=get_dbf_path)
-    # prj = models.FileField(upload_to=get_prj_path)
+    dbf = models.FileField(upload_to=get_dbf_path)
+    prj = models.FileField(upload_to=get_prj_path)
     shp = models.FileField(upload_to=get_shp_path)
-    # shx = models.FileField(upload_to=get_shx_path)
+    shx = models.FileField(upload_to=get_shx_path)
     objects = models.GeoManager()
     
     def __unicode__(self):
         return self.name
     
+    def get_shapefile_folder(self):
+        """
+        returns the path to the folder containing the shapefile
+        """
+        return os.path.join('media', 'shapes', self.slug)
+
     def get_projected_shapes(self, srid):
         """
         Returns a projected geoqueryset of all of the Shape objects
@@ -45,6 +52,14 @@ class ShapefileContainer(models.Model):
 
     def get_absolute_url(self):
         return '/%s/' % self.slug
+
+    # def delete(self):
+    #     """
+    #     A custom delete method that also kills the associated files
+    #     """
+    #     shutil.rmtree(self.get_shapefile_folder())
+    #     self.shape_set.all().delete()
+    #     self.delete()
 
 
 class Shape(models.Model):
