@@ -1,0 +1,3 @@
+User-agent: *
+Sitemap: http://shp2svg.com/sitemap.xml
+Disallow: /admin/
