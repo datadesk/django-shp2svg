@@ -24,6 +24,8 @@ class ShapefileContainer(models.Model):
     a Dict of SVG paths with the same projection.
     """
     name = models.CharField(max_length=500)
+    source = models.CharField(max_length=500)
+    is_permanent = models.BooleanField(default=False)
     slug = models.CharField(max_length=500, unique=True)
     dbf = models.FileField(upload_to=get_dbf_path)
     prj = models.FileField(upload_to=get_prj_path)
