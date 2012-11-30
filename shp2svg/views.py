@@ -54,6 +54,10 @@ def upload_shapefile(request):
             shp=request.FILES.get('shp'),
             shx=request.FILES.get('shx'),
         )
+        source = name = request.POST.get('source', False)
+        if source:
+            new_shapefile.source = source
+            new_shapefile.save()
         # See if we can import the shapefile. 
         try:
             ds = DataSource(new_shapefile.shp.path)
