@@ -31,6 +31,7 @@ def shapefile_detail(request, slug):
         'name': shapefile.name,
         'slug': shapefile.slug,
         'fields': layer.fields,
+        'source': shapefile.source,
     }
     return render(request, 'shapefilecontainer_detail.html', context)
 

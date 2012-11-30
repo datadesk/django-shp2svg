@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container" style="margin-top:20px; margin-bottom:40px">
+    {% include 'header.html' %}
+    <div>
+        <h2>We're sorry.</h1>
+        <div style="font-size:16px">
+            <p>We couldn't find the page you requested.</p>
+            <p style="margin-top:12px;">There might be a mistake in the URL, or the link could be out of date.</p>
+            <p style="margin-top:12px;">You could try:</p>
+            <ul>
+                <li>Typing the URL again.</li>
+                <li>Visiting <a href="/">the site index</a> to look for the information you want.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

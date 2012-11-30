@@ -2,6 +2,18 @@
 <html>
     <head>
         <link rel="stylesheet" href="{{ STATIC_URL }}css/bootstrap.min.css" type="text/css" />
+        <style type="text/css">
+        header h1 {font-size:70px;line-height:140%;}
+        .step {width:80px;height:80px;border-radius:80px;text-align:center;color:white;background: #333;font-size:60px;line-height: 120%;margin-top:15px;}
+        #step_1 {margin-top:40px;}
+        #step_1 .control-label {width:62px;}
+        #step_1 .controls {margin-left:85px;}
+        #step_1 .control-group {margin-bottom:7px;}
+        section {display:none;}
+        section#step_2 {display:block;}
+        div.progress.active {width:70px;}
+        .popover {text-align:center;}
+        </style>
         {% block extra-css %}{% endblock %}
         <script type="text/javascript" src="http://d1qqc1e9kvmdh8.cloudfront.net/js/underscore-1.4.1-min.js" type="text/javascript"></script>
         <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>

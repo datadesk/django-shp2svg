@@ -1,49 +1,5 @@
 {% extends "base.html" %}
 
-{% block extra-css %}
-    <style type="text/css">
-        header h1 {
-            font-size:70px;
-            line-height:140%;
-        }
-        .step {
-            width:80px;
-            height:80px;
-            border-radius:80px;
-            text-align:center;
-            color:white;
-            background: #333;
-            font-size:60px;
-            line-height: 120%;
-            margin-top:15px;
-        }
-        #step_1 {
-            margin-top:40px;
-        }
-        #step_1 .control-label {
-            width:62px;
-        }
-        #step_1 .controls {
-            margin-left:85px;
-        }
-        #step_1 .control-group {
-            margin-bottom:7px;
-        }
-        section {
-            display:none;
-        }
-        section#step_2 {
-            display:block;
-        }
-        div.progress.active {
-            width:70px;
-        }
-        .popover {
-            text-align:center;
-        }
-    </style>
-{% endblock %}
-
 {% block extra-js %}
     <script src="{{ STATIC_URL }}js/jquery.form.js"></script>
     <script src="{{ STATIC_URL }}js/json2.js"></script>
@@ -51,13 +7,13 @@
 
 {% block content %}
 <div class="container" style="margin-top:20px; margin-bottom:40px">
-    <header>
-        <h1><a style="color:inherit" href="/">shp2svg</a></h1>
-        <p class="lead">Some text here lorem ipsum etc</p>
-    </header>
+    {% include 'header.html' %}
     
     <h2>{{ name }}</h2>
-
+    {% if source %}
+    <h3>Source: {{ source }}</h3>
+    {% endif %}
+ 
     <section id="step_2">
         <div class="row">
             <div class="span2">
