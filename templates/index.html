@@ -41,7 +41,7 @@
             <div class="span9">
                 <h2>Upload your shapefile</h2>
 
-                <form class="form-horizontal" action="/upload_shape/" method="POST" id="files" >
+                <form class="form-horizontal" action="/upload_shape/" method="POST" id="files">
                     {% csrf_token %}
                     
                     <p>Shapefiles come in four parts. Make sure to include the .dbf, .prj, .shp and .shx files. If you need help finding a shapefile <a href="http://www.naturalearthdata.com/">Natural Earth</a> and the <a href="http://www.census.gov/geo/maps-data/data/tiger.html">US Census Bureau</a> are great places to start. To preview or edit a shapefile you need to install GIS software like <a href="http://www.qgis.org/">Quantum GIS</a> or use a web-based solution like <a href="http://mapshaper.com/test/MapShaper.swf">MapShaper</a>.</p>
@@ -63,27 +63,37 @@
                     <div class="control-group">
                         <label class="control-label" for="dbf">DBF File &#42;</label>
                         <div class="controls">
-                            <input type="file" required="required" class="required dbf" id="dbf" name="dbf" />
+                            <input type="file"  id="dbf" name="dbf" />
                         </div>
                     </div>
                     <div class="control-group">
                         <label class="control-label" for="prj">PRJ File &#42;</label>
                         <div class="controls">
-                            <input type="file" required="required" class="required prj" id="prj" name="prj" />
+                            <input type="file"  id="prj" name="prj" />
                         </div>
                     </div>
                     <div class="control-group">
                         <label class="control-label" for="shp">SHP File &#42;</label>
                         <div class="controls">
-                            <input type="file" required="required" class="required shp" id="shp" name="shp" />
+                            <input type="file"  id="shp" name="shp" />
                         </div>
                     </div>
                     <div class="control-group">
                         <label class="control-label" for="shx">SHX File &#42;</label>
                         <div class="controls">
-                            <input type="file" required="required" class="required shx" id="shx" name="shx" />
+                            <input type="file"  id="shx" name="shx" />
                         </div>
                     </div>
+
+
+                    <div class="control-group">
+                        <label class="control-label" for="zipfile">Zip File &#42;</label>
+                        <div class="controls">
+                            <input type="file" required="required" class="required" id="zipfile" name="zipfile" />
+                        </div>
+                    </div>
+                    
+
                     <div class="form-actions" id="step_1_submit">
                         <button type="submit" class="btn">Submit</button>
                     </div>
@@ -196,7 +206,11 @@
             $('#step_1_spinner').show();
         },
         error: function (error) {
-            warning_text.html(error.responseText);
+            if (error.status == 400) {
+                warning_text.html(error.responseText);
+            } else {
+                warning_text.html("There was an error processing your request.");
+            }
             error_text.show();
             $('#step_1_spinner').hide();
             $('#step_1_submit button').removeAttr('readonly');
@@ -223,7 +237,11 @@
             $('#options_spinner').show();
         },
         error: function (error) {
-            warning_text.html(error.responseText);
+            if (error.status == 400) {
+                warning_text.html(error.responseText);
+            } else {
+                warning_text.html("There was an error processing your request.");
+            }
             error_text.show();
             $('#step_3').hide();
             $('#step_4').hide();

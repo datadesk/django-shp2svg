@@ -98,7 +98,11 @@
             $('#options_spinner').show();
         },
         error: function (error) {
-            warning_text.html(error.responseText);
+            if (error.status == 400) {
+                warning_text.html(error.responseText);
+            } else {
+                warning_text.html("There was an error processing your request.");
+            }
             error_text.show();
             $('#step_3').hide();
             $('#step_4').hide();

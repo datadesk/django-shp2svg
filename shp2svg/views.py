@@ -8,11 +8,14 @@ from django.views.generic.base import View
 from django.contrib.sitemaps import Sitemap
 from django.utils import simplejson as json
 from django.core.urlresolvers import reverse
-from django.http import Http404, HttpResponse
+from django.http import Http404, HttpResponse, HttpResponseBadRequest
 from django.template.loader import get_template
 from django.template.defaultfilters import slugify
 from shp2svg.models import Shape, ShapefileContainer
 from django.contrib.gis.geos import MultiPolygon, Polygon
+
+from zipfile import ZipFile
+from django.core.files.base import ContentFile
 
 #
 # Sitemaps
@@ -44,13 +47,13 @@ class Sitemap(Sitemap):
 
 def index(request):
     context = {
-        'shapefiles': ShapefileContainer.objects.all()
+        'shapefiles': ShapefileContainer.objects.filter(is_permanent=True)
     }
     return render(request, 'index.html', context)
 
 def shapefile_detail(request, slug):
     try:
-        shapefile = ShapefileContainer.objects.get(slug=slug)
+        shapefile = ShapefileContainer.objects.get(slug=slug, is_permanent=True)
     except ShapefileContainer.DoesNotExist:
         raise Http404
 
@@ -70,21 +73,56 @@ def upload_shapefile(request):
         # Check to see if we already have an object with that name
         try:
             ShapefileContainer.objects.get(slug=slugify(name))
-            invalid_name_response = HttpResponse("The name you chose is already taken.")
-            invalid_name_response.status_code = 500
-            return invalid_name_response
+            return HttpResponseBadRequest("The name you chose is already taken.")
         except ShapefileContainer.DoesNotExist:
             pass
-        # Make the new shape container
-        new_shapefile = ShapefileContainer.objects.create(
-            name=name,
-            slug=slugify(name),
-            dbf=request.FILES.get('dbf'),
-            prj=request.FILES.get('prj'),
-            shp=request.FILES.get('shp'),
-            shx=request.FILES.get('shx'),
-        )
-        source = name = request.POST.get('source', False)
+        
+        # Do we have a zip file?
+        z = request.FILES.get('zipfile', False)
+        if z:
+            zipped = ZipFile(z)
+            filenames = [i.filename for i in zipped.filelist]
+            # check to see if the files could be extracted to an unexpected directory
+            dbf, prj, shp, shx = False, False, False, False
+            for i in filenames:
+                if '..' in i or '/' in i:
+                    return HttpResponseBadRequest("Your zip file contains unsuported file names. Try renaming them.")
+                # try to match the extension
+                elif '.dbf' in i.lower():
+                    dbf = unicode(zipped.read(i), errors='replace').decode('utf-8', 'replace')
+                elif '.prj' in i.lower():
+                    prj = unicode(zipped.read(i), errors='replace').decode('utf-8', 'replace')
+                elif '.shp' in i.lower():
+                    shp = unicode(zipped.read(i), errors='replace').decode('utf-8', 'replace')
+                elif '.shx' in i.lower():
+                    shx = unicode(zipped.read(i), errors='replace').decode('utf-8', 'replace')
+            print dbf
+            print prj
+            print shp
+            print shx
+            # make our new container object
+            if dbf and prj and shp and shx:
+                new_shapefile = ShapefileContainer.objects.create(
+                    name=name,
+                    slug=slugify(name),
+                    dbf=dbf.read(),
+                    prj=prj.read(),
+                    shp=shp.read(),
+                    shx=shx.read(),
+                )
+            else:
+                return HttpResponseBadRequest("Your zip file must contain a .dbf, a .prj, a .shp and a .shx file.")
+        else:
+            # Make the new shape container from the individually uploaded files
+            new_shapefile = ShapefileContainer.objects.create(
+                name=name,
+                slug=slugify(name),
+                dbf=request.FILES.get('dbf'),
+                prj=request.FILES.get('prj'),
+                shp=request.FILES.get('shp'),
+                shx=request.FILES.get('shx'),
+            )
+        source = request.POST.get('source', False)
         if source:
             new_shapefile.source = source
             new_shapefile.save()
@@ -93,9 +131,7 @@ def upload_shapefile(request):
             ds = DataSource(new_shapefile.shp.path)
         except:
             new_shapefile.delete()
-            response = HttpResponse("There was a problem processing your shapefile.")
-            response.status_code = 500
-            return response
+            return HttpResponseBadRequest("There was a problem processing your shapefile.")
 
         layer = ds[0]
         attribute_fields = layer.fields
@@ -116,9 +152,7 @@ def upload_shapefile(request):
                         shapefile = new_shapefile,
                     )
                 except:
-                    response = HttpResponse("There was a problem processing your shapefile.")
-                    response.status_code = 500
-                    return response
+                    return HttpResponseBadRequest("There was a problem processing your shapefile.")
             else:
                 continue
 
@@ -193,8 +227,7 @@ class GenerateSVG(SVGResponseMixin, JSONResponseMixin, View):
 
         translate = [0, 0]
         # some validation on the user input
-        invalid_int_response = HttpResponse("Please enter a valid integer.")
-        invalid_int_response.status_code = 500
+        invalid_int_response = HttpResponseBadRequest("Please enter a valid integer.")
 
         if self.request.GET.get('translate_x'):
             try:
@@ -234,9 +267,8 @@ class GenerateSVG(SVGResponseMixin, JSONResponseMixin, View):
                 y_coords.append(coords[1])
                 y_coords.append(coords[3])
         except:
-            response = HttpResponse("There was a problem projecting your shapefile. Please try a different SRID.")
-            response.status_code = 500
-            return response
+            return HttpResponseBadRequest("There was a problem projecting your shapefile. Please try a different SRID.")
+
         extent = (min(x_coords), min(y_coords), max(x_coords), max(y_coords))
         
         # get a constant to scale the coords to the provided max_size
