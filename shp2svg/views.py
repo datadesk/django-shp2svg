@@ -88,28 +88,24 @@ def upload_shapefile(request):
                 if '..' in i or '/' in i:
                     return HttpResponseBadRequest("Your zip file contains unsuported file names. Try renaming them.")
                 # try to match the extension
-                elif '.dbf' in i.lower():
-                    dbf = unicode(zipped.read(i), errors='replace').decode('utf-8', 'replace')
-                elif '.prj' in i.lower():
-                    prj = unicode(zipped.read(i), errors='replace').decode('utf-8', 'replace')
-                elif '.shp' in i.lower():
-                    shp = unicode(zipped.read(i), errors='replace').decode('utf-8', 'replace')
-                elif '.shx' in i.lower():
-                    shx = unicode(zipped.read(i), errors='replace').decode('utf-8', 'replace')
-            print dbf
-            print prj
-            print shp
-            print shx
+                elif '.dbf' in i.lower()[-4:]:
+                    dbf = ContentFile(zipped.read(i))
+                elif '.prj' in i.lower()[-4:]:
+                    prj = ContentFile(zipped.read(i))
+                elif '.shp' in i.lower()[-4:]:
+                    shp = ContentFile(zipped.read(i))
+                elif '.shx' in i.lower()[-4:]:
+                    shx = ContentFile(zipped.read(i))
             # make our new container object
             if dbf and prj and shp and shx:
                 new_shapefile = ShapefileContainer.objects.create(
                     name=name,
                     slug=slugify(name),
-                    dbf=dbf.read(),
-                    prj=prj.read(),
-                    shp=shp.read(),
-                    shx=shx.read(),
                 )
+                new_shapefile.dbf.save('dbf', dbf)
+                new_shapefile.prj.save('prj', prj)
+                new_shapefile.shp.save('shp', shp)
+                new_shapefile.shx.save('shx', shx)
             else:
                 return HttpResponseBadRequest("Your zip file must contain a .dbf, a .prj, a .shp and a .shx file.")
         else:
