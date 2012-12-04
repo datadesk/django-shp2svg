@@ -53,13 +53,19 @@ class ShapefileContainer(models.Model):
     def get_absolute_url(self):
         return '/%s/' % self.slug
 
-    # def delete(self):
-    #     """
-    #     A custom delete method that also kills the associated files
-    #     """
-    #     shutil.rmtree(self.get_shapefile_folder())
-    #     self.shape_set.all().delete()
-    #     self.delete()
+    def delete(self, *args, **kwargs):
+        """
+        A custom delete method that also kills the associated files
+        """
+        # kill off the files individually
+        self.dbf.delete()
+        self.prj.delete()
+        self.shp.delete()
+        self.shx.delete()
+        # get rid of the directory
+        # shutil.rmtree(self.get_shapefile_folder())
+        # and kill off the object
+        super(ShapefileContainer, self).delete(*args, **kwargs)
 
 
 class Shape(models.Model):
