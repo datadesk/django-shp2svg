@@ -1,5 +1,8 @@
 import math
+import base64
+from zipfile import ZipFile
 from django.conf import settings
+from django.core.cache import cache
 from django.shortcuts import render
 from django.shortcuts import redirect
 from django.contrib.gis.gdal import *
@@ -8,14 +11,12 @@ from django.views.generic.base import View
 from django.contrib.sitemaps import Sitemap
 from django.utils import simplejson as json
 from django.core.urlresolvers import reverse
-from django.http import Http404, HttpResponse, HttpResponseBadRequest
+from django.core.files.base import ContentFile
 from django.template.loader import get_template
 from django.template.defaultfilters import slugify
 from shp2svg.models import Shape, ShapefileContainer
 from django.contrib.gis.geos import MultiPolygon, Polygon
-
-from zipfile import ZipFile
-from django.core.files.base import ContentFile
+from django.http import Http404, HttpResponse, HttpResponseBadRequest
 
 #
 # Sitemaps
@@ -210,6 +211,15 @@ class GenerateSVG(SVGResponseMixin, JSONResponseMixin, View):
             path += 'Z'
         return path.replace('-0.0', '0').replace('0.0', '0').replace('.0', '')
 
+    def get_cache_key(self, obj, srid):
+        """
+        Create a unique cache key for the projected geoqueryset
+        using the object slug and SRID
+        """
+        id_string = '&'.join([obj.slug, str(srid)])
+        obj_hash = base64.b64encode(id_string)
+        return 'shp2svg:queryset|%s' % obj_hash
+
     def get(self, request, *args, **kwargs):
         self.format = self.request.GET.get('format', 'json')
         slug = self.request.GET.get('slug')
@@ -246,7 +256,11 @@ class GenerateSVG(SVGResponseMixin, JSONResponseMixin, View):
             centroid = True
         
         # get a projected geoqueryset
-        projected_shapes = shapefile.get_projected_shapes(srid)
+        cache_key = self.get_cache_key(shapefile, srid)
+        projected_shapes = cache.get(cache_key, None)
+        if not projected_shapes:
+            projected_shapes = shapefile.get_projected_shapes(srid)
+            cache.set(cache_key, projected_shapes)
         
         # get the projected extent of the geoqueryset
         x_coords = []
