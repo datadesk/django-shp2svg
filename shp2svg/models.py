@@ -1,6 +1,6 @@
 import os
 import math
-import shutil
+import subprocess
 from django.conf import settings
 from django.contrib.gis.db import models
 
@@ -41,7 +41,7 @@ class ShapefileContainer(models.Model):
         """
         returns the path to the folder containing the shapefile
         """
-        return os.path.join('media', 'shapes', self.slug)
+        return os.path.join(settings.ROOT_PATH, 'media', 'shapes', self.slug)
 
     def get_projected_shapes(self, srid):
         """
@@ -63,7 +63,8 @@ class ShapefileContainer(models.Model):
         self.shp.delete()
         self.shx.delete()
         # get rid of the directory
-        # shutil.rmtree(self.get_shapefile_folder())
+        path = self.get_shapefile_folder()
+        subprocess.call(['rm', '-rf', path])
         # and kill off the object
         super(ShapefileContainer, self).delete(*args, **kwargs)
 
