@@ -85,10 +85,7 @@ def upload_shapefile(request):
             # check to see if the files could be extracted to an unexpected directory
             dbf, prj, shp, shx = False, False, False, False
             for i in filenames:
-                if '..' in i or '/' in i:
-                    return HttpResponseBadRequest("Your zip file contains unsuported file names. Try renaming them.")
-                # try to match the extension
-                elif '.dbf' in i.lower()[-4:]:
+                if '.dbf' in i.lower()[-4:]:
                     dbf = ContentFile(zipped.read(i))
                 elif '.prj' in i.lower()[-4:]:
                     prj = ContentFile(zipped.read(i))

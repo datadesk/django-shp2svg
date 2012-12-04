@@ -61,25 +61,25 @@
                         </div>
                     </div>
                     <div class="control-group">
-                        <label class="control-label" for="dbf">DBF File &#42;</label>
+                        <label class="control-label" for="dbf">DBF File</label>
                         <div class="controls">
                             <input type="file"  id="dbf" name="dbf" />
                         </div>
                     </div>
                     <div class="control-group">
-                        <label class="control-label" for="prj">PRJ File &#42;</label>
+                        <label class="control-label" for="prj">PRJ File</label>
                         <div class="controls">
                             <input type="file"  id="prj" name="prj" />
                         </div>
                     </div>
                     <div class="control-group">
-                        <label class="control-label" for="shp">SHP File &#42;</label>
+                        <label class="control-label" for="shp">SHP File</label>
                         <div class="controls">
                             <input type="file"  id="shp" name="shp" />
                         </div>
                     </div>
                     <div class="control-group">
-                        <label class="control-label" for="shx">SHX File &#42;</label>
+                        <label class="control-label" for="shx">SHX File</label>
                         <div class="controls">
                             <input type="file"  id="shx" name="shx" />
                         </div>
@@ -87,9 +87,15 @@
 
 
                     <div class="control-group">
-                        <label class="control-label" for="zipfile">Zip File &#42;</label>
                         <div class="controls">
-                            <input type="file" required="required" class="required" id="zipfile" name="zipfile" />
+                            <h5>&#8212; OR &#8212;</h5>
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label" for="zipfile">Zip File</label>
+                        <div class="controls">
+                            <input type="file" id="zipfile" name="zipfile" />
                         </div>
                     </div>
                     
@@ -170,7 +176,56 @@
         return this.optional(element) || /\.shx$/.test(value); 
     }, "Please choose a .shx file.");
 
-    $('#files').validate();
+    var $zipfile = $('#zipfile');
+    var validate_zipfile = function () {
+        if ($zipfile.val() === ''){
+            return true
+        } else {
+            return false
+        }
+    };
+
+    var $dbf = $('#dbf'),
+        $prj = $('#prj'),
+        $shp = $('#shp'),
+        $shx = $('#shx');
+    var validate_file_fields = function () {
+        if ($dbf.val() == '' && $prj.val() == '' && $shp.val() == '' && $shx.val() == '') {
+            return true
+        } else {
+            return false
+        }
+    };
+
+    $('#files').validate({
+        rules: {
+            dbf: {
+                required: function (el) {
+                    return validate_zipfile();
+                }
+            },
+            prj: {
+                required: function (el) {
+                    return validate_zipfile();
+                }
+            },
+            shp: {
+                required: function (el) {
+                    return validate_zipfile();
+                }
+            },
+            shx: {
+                required: function (el) {
+                    return validate_zipfile();
+                }
+            },
+            zipfile: {
+                required: function (el) {
+                    return validate_file_fields();
+                }
+            }
+        }
+    });
     $('#options').validate();
     $('i').popover();
 
