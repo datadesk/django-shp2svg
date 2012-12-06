@@ -26,7 +26,6 @@ class ShapefileContainer(models.Model):
     """
     name = models.CharField(max_length=500)
     source = models.CharField(max_length=500, blank=True)
-    is_permanent = models.BooleanField(default=False)
     slug = models.CharField(max_length=500, unique=True)
     dbf = models.FileField(upload_to=get_dbf_path, max_length=500)
     prj = models.FileField(upload_to=get_prj_path, max_length=500)

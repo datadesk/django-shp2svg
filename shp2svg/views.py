@@ -26,7 +26,7 @@ class ShapefileContainerSitemap(Sitemap):
     changefreq = "daily"
 
     def items(self):
-        return ShapefileContainer.objects.filter(is_permanent=True)
+        return ShapefileContainer.objects.all()
 
 
 class Sitemap(Sitemap):
@@ -48,13 +48,13 @@ class Sitemap(Sitemap):
 
 def index(request):
     context = {
-        'shapefiles': ShapefileContainer.objects.filter(is_permanent=True)
+        'shapefiles': ShapefileContainer.objects.all()
     }
     return render(request, 'index.html', context)
 
 def shapefile_detail(request, slug):
     try:
-        shapefile = ShapefileContainer.objects.get(slug=slug, is_permanent=True)
+        shapefile = ShapefileContainer.objects.get(slug=slug)
     except ShapefileContainer.DoesNotExist:
         raise Http404
 

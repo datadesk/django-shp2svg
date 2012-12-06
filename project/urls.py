@@ -14,9 +14,9 @@ urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
     url(r'^upload_shape/', views.upload_shapefile),
     url(r'^setup/', views.GenerateSVG.as_view()),
-    url(r'^robots\.txt$', direct_to_template, {
+    # url(r'^robots\.txt$', direct_to_template, {
         'template': 'robots.txt', 'mimetype': 'text/plain'}),
-    url(r'^sitemap\.xml$', 'django.contrib.sitemaps.views.sitemap', {
+    # url(r'^sitemap\.xml$', 'django.contrib.sitemaps.views.sitemap', {
         'sitemaps': sitemaps}),
     url(r'^(?P<slug>[-\d\w]+)/$', views.shapefile_detail, name="shapefile detail"),
 )
