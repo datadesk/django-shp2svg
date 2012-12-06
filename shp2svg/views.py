@@ -281,16 +281,14 @@ class GenerateSVG(SVGResponseMixin, JSONResponseMixin, View):
         # get a constant to scale the coords to the provided max_size
         max_translated_x = abs(extent[2] - extent[0])
         max_translated_y = abs(extent[3] - extent[1])
+
         if max_translated_x > max_translated_y:
             scale_factor = max_size / max_translated_x
-        elif max_translated_y > max_translated_x:
+        else:
             scale_factor = max_size / max_translated_y
         
         # Determine our new max X and Y values
-        extent = list(extent)
-        y_translated_max = abs(extent[3] - extent[1])
-        x_translated_max = abs(extent[2] - extent[0])
-        max_coords = [int(math.ceil(x_translated_max * scale_factor)), int(math.ceil(y_translated_max * scale_factor))]
+        max_coords = [int(math.ceil(max_translated_x * scale_factor)), int(math.ceil(max_translated_y * scale_factor))]
         
         # generate all the paths
         paths = {}
