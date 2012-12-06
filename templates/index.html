@@ -63,25 +63,25 @@
                     <div class="control-group">
                         <label class="control-label" for="dbf">DBF File</label>
                         <div class="controls">
-                            <input type="file"  id="dbf" name="dbf" />
+                            <input type="file"  id="dbf" class="dbf" name="dbf" />
                         </div>
                     </div>
                     <div class="control-group">
                         <label class="control-label" for="prj">PRJ File</label>
                         <div class="controls">
-                            <input type="file"  id="prj" name="prj" />
+                            <input type="file"  id="prj" class="prj" name="prj" />
                         </div>
                     </div>
                     <div class="control-group">
                         <label class="control-label" for="shp">SHP File</label>
                         <div class="controls">
-                            <input type="file"  id="shp" name="shp" />
+                            <input type="file"  id="shp" class="shp" name="shp" />
                         </div>
                     </div>
                     <div class="control-group">
                         <label class="control-label" for="shx">SHX File</label>
                         <div class="controls">
-                            <input type="file"  id="shx" name="shx" />
+                            <input type="file"  id="shx" class="shx" name="shx" />
                         </div>
                     </div>
 
@@ -95,7 +95,7 @@
                     <div class="control-group">
                         <label class="control-label" for="zipfile">Zip File</label>
                         <div class="controls">
-                            <input type="file" id="zipfile" name="zipfile" />
+                            <input type="file" class="zip" id="zipfile" name="zipfile" />
                         </div>
                     </div>
                     
@@ -175,6 +175,10 @@
     jQuery.validator.addMethod("shx", function(value, element) { 
         return this.optional(element) || /\.shx$/.test(value); 
     }, "Please choose a .shx file.");
+
+    jQuery.validator.addMethod("zip", function(value, element) { 
+        return this.optional(element) || /\.zip$/.test(value); 
+    }, "Please choose a .zip file.");
 
     var $zipfile = $('#zipfile');
     var validate_zipfile = function () {

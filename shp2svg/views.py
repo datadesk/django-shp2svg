@@ -1,5 +1,6 @@
 import math
 import base64
+import zipfile
 from zipfile import ZipFile
 from django.conf import settings
 from django.core.cache import cache
@@ -81,9 +82,10 @@ def upload_shapefile(request):
         # Do we have a zip file?
         z = request.FILES.get('zipfile', False)
         if z:
+            if not zipfile.is_zipfile(z):
+                return HttpResponseBadRequest("You have uploaded an invalid zip file.")
             zipped = ZipFile(z)
             filenames = [i.filename for i in zipped.filelist]
-            # check to see if the files could be extracted to an unexpected directory
             dbf, prj, shp, shx = False, False, False, False
             for i in filenames:
                 if '.dbf' in i.lower()[-4:]:
