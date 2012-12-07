@@ -1,12 +1,12 @@
 import os
 ROOT_PATH = os.path.split(os.path.dirname(__file__))[0]
 
-DEBUG = False
+DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 # Fill in your admins here
 ADMINS = (
-    ('Sample Admin', 'admin@example.com'),
+    # ('Sample Admin', 'admin@example.com'),
 )
 
 MANAGERS = ADMINS
@@ -93,8 +93,6 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'shp2svg',
     'south',
-    # Uncomment the next line to enable admin documentation:
-    # 'django.contrib.admindocs',
 )
 
 LOGGING = {
