@@ -1,11 +1,12 @@
 import os
 ROOT_PATH = os.path.split(os.path.dirname(__file__))[0]
 
-DEBUG = True
+DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
+# Fill in your admins here
 ADMINS = (
-    ('Anthony Pesce', 'anthony.pesce@latimes.com'),
+    ('Sample Admin', 'admin@example.com'),
 )
 
 MANAGERS = ADMINS
@@ -52,7 +53,7 @@ STATICFILES_FINDERS = (
 )
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = 'bwdydb+-a5*c8^-zjwa#n@-pk-_+7w34yg2xr5+lss=p%x2ehs'
+SECRET_KEY = ''
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
