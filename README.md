@@ -50,6 +50,11 @@ And install the requirements:
     $ cd project
     $ pip install -r requirements.txt
 
+Sync up the database (we're using South, though you're welcome to drop it locally):
+
+  $ python manage.py syncdb
+  $ python manage.py migrate shp2svg
+
 Finally, update your settings.py file with your database name and local settings. Start the local server:
 
     $ fab rs
