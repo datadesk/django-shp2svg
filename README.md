@@ -50,13 +50,14 @@ And install the requirements:
     $ cd project
     $ pip install -r requirements.txt
 
-Sync up the database (we're using South, though you're welcome to drop it locally):
+Sync up the database (we're using South, though you're welcome to drop it locally) and create the cache table:
 
-  $ python manage.py syncdb
-  $ python manage.py migrate shp2svg
+    $ python manage.py syncdb
+    $ python manage.py migrate shp2svg
+    $ python manage.py createcachetable my_cache_table
 
 Finally, update your settings.py file with your database name and local settings. Start the local server:
 
     $ fab rs
 
-You're good to go!
+You're good to go! Check out [http://localhost:8000](http://localhost:8000).
