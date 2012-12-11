@@ -14,7 +14,7 @@ Y8ooooo. 88'  `88 88'  `88 88'     Y8ooooo. 88   d8' 88'  `88
 django-shp2svg
 ==============
 
-*This project is still in progress, so don't take too seriously yet*
+For more information check out our post on The Times' Data Desk blog: [Introducing shp2svg](http://datadesk.latimes.com/posts/2012/12/introducing-shp2svg/)
 
 Convert a shapefile into an SVG you can use with JavaScript drawing libraries.
 
