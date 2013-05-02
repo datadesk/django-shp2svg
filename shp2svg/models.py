@@ -49,6 +49,15 @@ class ShapefileContainer(models.Model):
         """
         return self.shape_set.all().transform(srid)
 
+    def get_custom_projection(self, proj):
+        """
+        Transform via a custom projection
+        """
+        ct = CoordTransform(SpatialReference('WGS84'), SpatialReference(proj))
+        for feat in layer:
+            geom = feat.geom
+            geom.transform(ct)
+
     def get_absolute_url(self):
         return '/%s/' % self.slug
 

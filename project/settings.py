@@ -6,6 +6,7 @@ TEMPLATE_DEBUG = DEBUG
 
 # Fill in your admins here
 ADMINS = (
+    ('Armand Emamdjomeh', 'armand.emamdjomeh@latimes.com'),
     # ('Sample Admin', 'admin@example.com'),
 )
 
