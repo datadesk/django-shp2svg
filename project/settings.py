@@ -81,7 +81,7 @@ TEMPLATE_DIRS = (
     os.path.join(ROOT_PATH, 'templates'),
 )
 
-INSTALLED_APPS = (
+INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -92,7 +92,7 @@ INSTALLED_APPS = (
     'django.contrib.gis',
     'django.contrib.admin',
     'shp2svg',
-)
+]
 
 LOGGING = {
     'version': 1,
