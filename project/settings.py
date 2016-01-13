@@ -24,9 +24,9 @@ DATABASES = {
 
 CACHES = {
     'default': {
-        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
-        'LOCATION': 'my_cache_table',
-        # 'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+        # 'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        # 'LOCATION': 'my_cache_table',
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
     }
 }
 
@@ -53,7 +53,7 @@ STATICFILES_FINDERS = (
 )
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = ''
+SECRET_KEY = 'asd'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -92,7 +92,6 @@ INSTALLED_APPS = (
     'django.contrib.gis',
     'django.contrib.admin',
     'shp2svg',
-    'south',
 )
 
 LOGGING = {

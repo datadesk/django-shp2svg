@@ -1,4 +1,5 @@
 import math
+import json
 import base64
 import zipfile
 from zipfile import ZipFile
@@ -10,7 +11,6 @@ from django.contrib.gis.gdal import *
 from django.template import RequestContext
 from django.views.generic.base import View
 from django.contrib.sitemaps import Sitemap
-from django.utils import simplejson as json
 from django.core.urlresolvers import reverse
 from django.core.files.base import ContentFile
 from django.template.loader import get_template
