@@ -100,8 +100,8 @@ def upload_shapefile(request):
         if source:
             new_shapefile.source = source
             new_shapefile.save()
-        # See if we can import the shapefile. 
-
+        
+        new_shapefile.create_shapes()
         data = {
             'name': new_shapefile.name,
             'slug': new_shapefile.slug,
@@ -171,7 +171,7 @@ class GenerateSVG(SVGResponseMixin, JSONResponseMixin, View):
         except ShapefileContainer.DoesNotExist:
             raise Http404
 
-        # translate = [0, 0]
+        translate = [0, 0]
         # # some validation on the user input
         # invalid_int_response = HttpResponseBadRequest("Please enter a valid integer.")
 
@@ -193,6 +193,7 @@ class GenerateSVG(SVGResponseMixin, JSONResponseMixin, View):
         except ValueError:
             return invalid_int_response
         
+        key = self.request.GET.get('key')
         centroid = self.request.GET.get('centroid', False)
         if centroid == 'on':
             centroid = True
@@ -203,12 +204,9 @@ class GenerateSVG(SVGResponseMixin, JSONResponseMixin, View):
         x_coords = []
         y_coords = []
         # Wrap this in a try/except to return any errors we hit with the projection
-        print "HELLO HELLO ************"
         try:
             for i in projected_shapes:
-                print i
                 coords = i.poly.extent
-                print coords
                 x_coords.append(coords[0])
                 x_coords.append(coords[2])
                 y_coords.append(coords[1])

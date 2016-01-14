@@ -26,7 +26,7 @@ class Shape(models.Model):
     """
     An individual MultiPolygon
     """
-    poly = models.MultiPolygonField()
+    poly = models.MultiPolygonField(dim=3)
     # Will store the attributes here as JSON
     attributes = models.TextField(blank=True, null=True)
     shapefile = models.ForeignKey("ShapefileContainer", null=True, blank=True)
@@ -95,13 +95,12 @@ class ShapefileContainer(models.Model):
         # and kill off the object
         super(ShapefileContainer, self).delete(*args, **kwargs)
 
-    def create_shape(self):
+    def create_shapes(self):
         ds = DataSource(self.shp.path)
         layer = ds[0]
         attribute_fields = layer.fields
         for feature in layer:
             if 'polygon' in str(feature.geom.geom_type).lower():
-                print "ok"
                 # Grab a dict of all the attributes
                 attribute_dict = dict( (attr, str(feature[attr].value).decode('latin-1')) for attr in attribute_fields )
                 # convert to multipolygon if necessary
