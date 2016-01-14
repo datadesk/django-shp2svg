@@ -18,30 +18,7 @@ from django.template.defaultfilters import slugify
 from shp2svg.models import Shape, ShapefileContainer
 from django.contrib.gis.geos import MultiPolygon, Polygon
 from django.http import Http404, HttpResponse, HttpResponseBadRequest
-
-#
-# Sitemaps
-#
-
-class ShapefileContainerSitemap(Sitemap):
-    changefreq = "daily"
-
-    def items(self):
-        return ShapefileContainer.objects.all()
-
-
-class Sitemap(Sitemap):
-    def __init__(self, names):
-        self.names = names
-
-    def items(self):
-        return self.names
-
-    def changefreq(self, obj):
-        return 'daily'
-
-    def location(self, obj):
-        return reverse(obj)
+from django.contrib.gis.gdal import DataSource
 
 #
 # Content
@@ -106,6 +83,7 @@ def upload_shapefile(request):
                 new_shapefile.prj.save('prj', prj)
                 new_shapefile.shp.save('shp', shp)
                 new_shapefile.shx.save('shx', shx)
+                new_shapefile.save()
             else:
                 return HttpResponseBadRequest("Your zip file must contain a .dbf, a .prj, a .shp and a .shx file.")
         else:
@@ -123,34 +101,6 @@ def upload_shapefile(request):
             new_shapefile.source = source
             new_shapefile.save()
         # See if we can import the shapefile. 
-        try:
-            ds = DataSource(new_shapefile.shp.path)
-        except:
-            new_shapefile.delete()
-            return HttpResponseBadRequest("There was a problem processing your shapefile.")
-
-        layer = ds[0]
-        attribute_fields = layer.fields
-        for feature in layer:
-            if feature.geom.geom_type in ['Polygon', 'MultiPolygon']:
-                # Grab a dict of all the attributes
-                attribute_dict = dict( (attr, str(feature[attr].value).decode('latin-1')) for attr in attribute_fields )
-                # convert to multipolygon if necessary
-                if feature.geom.geom_type == 'Polygon':
-                    mp = MultiPolygon(feature.geom.geos)
-                else:
-                    mp = feature.geom.geos
-                # load in the shape
-                try:
-                    shape = Shape.objects.create(
-                        poly = mp,
-                        attributes = json.dumps(attribute_dict),
-                        shapefile = new_shapefile,
-                    )
-                except:
-                    return HttpResponseBadRequest("There was a problem processing your shapefile.")
-            else:
-                continue
 
         data = {
             'name': new_shapefile.name,
@@ -213,15 +163,6 @@ class GenerateSVG(SVGResponseMixin, JSONResponseMixin, View):
             path += 'Z'
         return path.replace('-0.0', '0').replace('0.0', '0').replace('.0', '')
 
-    def get_cache_key(self, obj, srid):
-        """
-        Create a unique cache key for the projected geoqueryset
-        using the object slug and SRID
-        """
-        id_string = '&'.join([obj.slug, str(srid)])
-        obj_hash = base64.b64encode(id_string)
-        return 'shp2svg:queryset|%s' % obj_hash
-
     def get(self, request, *args, **kwargs):
         self.format = self.request.GET.get('format', 'json')
         slug = self.request.GET.get('slug')
@@ -230,21 +171,21 @@ class GenerateSVG(SVGResponseMixin, JSONResponseMixin, View):
         except ShapefileContainer.DoesNotExist:
             raise Http404
 
-        translate = [0, 0]
-        # some validation on the user input
-        invalid_int_response = HttpResponseBadRequest("Please enter a valid integer.")
+        # translate = [0, 0]
+        # # some validation on the user input
+        # invalid_int_response = HttpResponseBadRequest("Please enter a valid integer.")
 
-        if self.request.GET.get('translate_x'):
-            try:
-                translate[0] = int(self.request.GET.get('translate_x'))
-            except ValueError:
-                return invalid_int_response
+        # if self.request.GET.get('translate_x'):
+        #     try:
+        #         translate[0] = int(self.request.GET.get('translate_x'))
+        #     except ValueError:
+        #         return invalid_int_response
 
-        if self.request.GET.get('translate_y'):
-            try:
-                translate[1] = int(self.request.GET.get('translate_y'))
-            except ValueError:
-                return invalid_int_response
+        # if self.request.GET.get('translate_y'):
+        #     try:
+        #         translate[1] = int(self.request.GET.get('translate_y'))
+        #     except ValueError:
+        #         return invalid_int_response
         
         try:
             max_size = int(self.request.GET.get('max_size'))
@@ -252,25 +193,22 @@ class GenerateSVG(SVGResponseMixin, JSONResponseMixin, View):
         except ValueError:
             return invalid_int_response
         
-        key = self.request.GET.get('key')
         centroid = self.request.GET.get('centroid', False)
         if centroid == 'on':
             centroid = True
-        
-        # get a projected geoqueryset
-        cache_key = self.get_cache_key(shapefile, srid)
-        projected_shapes = cache.get(cache_key, None)
-        if not projected_shapes:
-            projected_shapes = shapefile.get_projected_shapes(srid)
-            cache.set(cache_key, projected_shapes)
-        
+            
+        projected_shapes = shapefile.get_projected_shapes(srid)
+        print projected_shapes
         # get the projected extent of the geoqueryset
         x_coords = []
         y_coords = []
         # Wrap this in a try/except to return any errors we hit with the projection
+        print "HELLO HELLO ************"
         try:
             for i in projected_shapes:
+                print i
                 coords = i.poly.extent
+                print coords
                 x_coords.append(coords[0])
                 x_coords.append(coords[2])
                 y_coords.append(coords[1])

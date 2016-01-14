@@ -1,8 +1,12 @@
 import os
+import json
 import math
 import subprocess
 from django.conf import settings
 from django.contrib.gis.db import models
+from django.contrib.gis.gdal import DataSource
+from django.contrib.gis.geos import MultiPolygon, Polygon
+
 
 
 def get_dbf_path(instance, filename):
@@ -16,6 +20,28 @@ def get_shp_path(instance, filename):
 
 def get_shx_path(instance, filename):
     return os.path.join('shapes', instance.slug, instance.slug + '.shx')
+
+
+class Shape(models.Model):
+    """
+    An individual MultiPolygon
+    """
+    poly = models.MultiPolygonField()
+    # Will store the attributes here as JSON
+    attributes = models.TextField(blank=True, null=True)
+    shapefile = models.ForeignKey("ShapefileContainer", null=True, blank=True)
+    objects = models.GeoManager()
+
+    def get_extracted_coords(self):
+        """
+        Extracts the nested multigeometry coordinates into a nicer list
+        """
+        coords = self.poly.coords
+        geom_list = []
+        for i in coords:
+            for coord in i:
+                geom_list.append(list(coord))
+        return geom_list
 
 
 class ShapefileContainer(models.Model):
@@ -47,8 +73,10 @@ class ShapefileContainer(models.Model):
         Returns a projected geoqueryset of all of the Shape objects
         in the collection
         """
-        return self.shape_set.all().transform(srid)
-
+        res = self.shape_set.all().transform(srid)
+        print res
+        return res
+    
     def get_absolute_url(self):
         return '/%s/' % self.slug
 
@@ -67,24 +95,25 @@ class ShapefileContainer(models.Model):
         # and kill off the object
         super(ShapefileContainer, self).delete(*args, **kwargs)
 
-
-class Shape(models.Model):
-    """
-    An individual MultiPolygon
-    """
-    poly = models.MultiPolygonField()
-    # Will store the attributes here as JSON
-    attributes = models.TextField(blank=True, null=True)
-    shapefile = models.ForeignKey("ShapefileContainer", null=True, blank=True)
-    objects = models.GeoManager()
-
-    def get_extracted_coords(self):
-        """
-        Extracts the nested multigeometry coordinates into a nicer list
-        """
-        coords = self.poly.coords
-        geom_list = []
-        for i in coords:
-            for coord in i:
-                geom_list.append(list(coord))
-        return geom_list
+    def create_shape(self):
+        ds = DataSource(self.shp.path)
+        layer = ds[0]
+        attribute_fields = layer.fields
+        for feature in layer:
+            if 'polygon' in str(feature.geom.geom_type).lower():
+                print "ok"
+                # Grab a dict of all the attributes
+                attribute_dict = dict( (attr, str(feature[attr].value).decode('latin-1')) for attr in attribute_fields )
+                # convert to multipolygon if necessary
+                if 'multipolygon' not in str(feature.geom.geom_type).lower():
+                    mp = MultiPolygon(feature.geom.geos)
+                else:
+                    mp = feature.geom.geos
+                # load in the shape
+                print mp
+                shape = Shape.objects.create(
+                    poly=mp,
+                    attributes=json.dumps(attribute_dict),
+                    shapefile=self,
+                )
+                print "created", shape
