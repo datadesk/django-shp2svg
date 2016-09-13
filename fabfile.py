@@ -1,6 +1,7 @@
 from __future__ import with_statement
 from fabric.api import *
 import os
+import random
 
 
 
@@ -23,10 +24,10 @@ def rs(port=8000):
     Fire up the Django test server, after cleaning out any .pyc files.
 
     Example usage:
-    
+
         $ fab rs
         $ fab rs:port=9000
-    
+
     """
     with settings(warn_only=True):
         rmpyc()
@@ -38,29 +39,40 @@ def sh():
     Fire up the Django shell, after cleaning out any .pyc files.
 
     Example usage:
-    
+
         $ fab sh
-    
+
     """
     rmpyc()
     local("python manage.py shell", capture=False)
 
 
+def makesecret(
+    length=50,
+    allowed_chars='abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)'
+):
+    """
+    Generates secret key for use in Django settings.
+    """
+    key = ''.join(random.choice(allowed_chars) for i in range(length))
+    print 'SECRET_KEY = "%s"' % key
+
+
 def load():
     """
     Prints the current load values.
-    
+
     Example usage:
-    
+
         $ fab stage load
         $ fab prod load
-        
+
     """
     def _set_color(load):
         """
-        Sets the terminal color for an load average value depending on how 
+        Sets the terminal color for an load average value depending on how
         high it is.
-        
+
         Accepts a string formatted floating point.
 
         Returns a formatted string you can print.
@@ -76,7 +88,7 @@ def load():
         else:
             # Return red
             return template % (31, value)
-    
+
     with hide('everything'):
         # Fetch the data
         uptime = run("uptime")
