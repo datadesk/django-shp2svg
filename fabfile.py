@@ -4,7 +4,6 @@ import os
 import random
 
 
-
 def rmpyc():
     """
     Erases pyc files from current directory.
