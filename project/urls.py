@@ -1,7 +1,6 @@
 from shp2svg import views
 from django.contrib import admin
 from django.conf.urls import patterns, include, url
-from django.views.generic.simple import direct_to_template
 admin.autodiscover()
 
 sitemaps = {
