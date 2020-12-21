@@ -1,7 +1,7 @@
 Django==1.5.4
 Fabric==1.5.1
 South==0.7.6
-paramiko==1.9.0
+paramiko==2.0.9
 psycopg2==2.4.5
 pycrypto==2.6
 wsgiref==0.1.2
